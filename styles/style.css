@@ -333,7 +333,7 @@ h1 {
   align-items: center;
   gap: 0.7rem;
   min-height: 4rem;
-  padding: 0.6rem 0.2rem;
+  padding: 0.6rem 0.2rem 0.6rem 0;
   font-size: 1.2rem;
   letter-spacing: 0.06em;
   color: var(--ink-dim);
@@ -474,7 +474,7 @@ h1 {
   height: auto;
   min-width: 4.4rem;
   min-height: 4.4rem;
-  padding: 1rem 0.2rem;
+  padding: 1rem 0.2rem 1rem 0;
   margin: 0;
   line-height: 0;
   color: var(--ink-dim);
@@ -504,7 +504,9 @@ h1 {
   #nav-toggle {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    /* Not centred: the icon has to line up with the text below it, and the
+       extra width of the tap target belongs on the right. */
+    justify-content: flex-start;
   }
 
   #nav-sets {
