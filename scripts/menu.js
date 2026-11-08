@@ -9,8 +9,9 @@
 // mutually exclusive choices, and toggle buttons would both misreport that
 // to a screen reader and leave the group un-navigable from the keyboard.
 //
-// The mute control is deliberately not in here. It is a persistent state,
-// not a choice among options, so it floats in its own corner.
+// There is no separate mute: the jukebox's Off is the audio control, and
+// it silences the wallpaper stings too. Two controls for one thing invited
+// the state where music is off but the page still makes noise.
 
 function h(tag, props, children) {
   const el = document.createElement(tag);
@@ -40,22 +41,6 @@ function closeIcon() {
     '<svg viewBox="0 0 22 22" aria-hidden="true" focusable="false">' +
     '<path d="M5 5l12 12M17 5L5 17" fill="none" stroke="currentColor" ' +
     'stroke-width="1.7" stroke-linecap="round"/></svg>'
-  );
-}
-
-function soundIcon(on) {
-  const speaker = '<path d="M3 9.5v5h3.2L11 18.8V5.2L6.2 9.5H3z" fill="currentColor"/>';
-  const waves =
-    '<path d="M13.7 8.6a4.4 4.4 0 0 1 0 6.8M16 6.1a7.8 7.8 0 0 1 0 11.8" ' +
-    'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>';
-  const cross =
-    '<path d="M14.2 9.4l4.6 5.2M18.8 9.4l-4.6 5.2" ' +
-    'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>';
-  return (
-    '<svg viewBox="0 0 22 24" aria-hidden="true" focusable="false">' +
-    speaker +
-    (on ? waves : cross) +
-    '</svg>'
   );
 }
 
@@ -153,7 +138,6 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
 export function buildMenu(opts) {
   const {
     navMount,
-    soundMount,
     themes,
     tracks,
     getTheme,
@@ -161,8 +145,6 @@ export function buildMenu(opts) {
     onTheme,
     onTrack,
     soundAvailable,
-    isSoundOn,
-    onSound,
   } = opts;
 
   const nav = h('nav', { id: 'nav' });
@@ -199,32 +181,6 @@ export function buildMenu(opts) {
   nav.appendChild(sets);
   nav.appendChild(toggle);
   navMount.appendChild(nav);
-
-  // --- mute, in its own corner -------------------------------------------
-
-  let muteBtn = null;
-  if (soundAvailable && soundMount) {
-    muteBtn = h('button', { type: 'button', id: 'mute' });
-    muteBtn.addEventListener('click', () => {
-      onSound(!isSoundOn());
-      paintSound();
-    });
-    soundMount.appendChild(muteBtn);
-  }
-
-  function paintSound() {
-    const on = isSoundOn();
-    // A chosen track with the sound off looks broken. Dim the control so
-    // the dependency is visible rather than something to work out.
-    nav.dataset.muted = String(!on);
-    if (!muteBtn) return;
-    muteBtn.innerHTML = soundIcon(on);
-    const label = on ? 'Sound on' : 'Sound off';
-    muteBtn.setAttribute('aria-pressed', String(on));
-    muteBtn.setAttribute('aria-label', label);
-    muteBtn.setAttribute('title', label);
-  }
-  paintSound();
 
   // --- collapsed bar ------------------------------------------------------
   //
@@ -274,7 +230,6 @@ export function buildMenu(opts) {
     refresh() {
       wallpaper.paint();
       if (jukebox) jukebox.paint();
-      paintSound();
     },
   };
 }

@@ -6,33 +6,15 @@
 // created AudioContext, a compressor on the master bus, and an onended reaper
 // that disconnects every node so repeated plays cannot leak them.
 
-const STORE_KEY = 'zharnite.sound';
 const TRACK_KEY = 'zharnite.track';
 
 let ctx = null;
 let master = null;
-let enabled = false;
 
-// --- persistence ----------------------------------------------------------
-
-function readStored() {
-  try {
-    return localStorage.getItem(STORE_KEY) === 'on';
-  } catch (e) {
-    return false;
-  }
+// Sound is off until a track is chosen. Never autoplay.
+function soundOn() {
+  return desiredTrack !== 'off';
 }
-
-function writeStored(on) {
-  try {
-    localStorage.setItem(STORE_KEY, on ? 'on' : 'off');
-  } catch (e) {
-    /* private mode, blocked storage: not fatal */
-  }
-}
-
-// Sound is off until asked for. Never autoplay.
-enabled = readStored();
 
 // --- graph ----------------------------------------------------------------
 
@@ -91,23 +73,6 @@ function reap(src, ...nodes) {
   };
 }
 
-// The 1930s character is mostly bandwidth: old optical and shellac tracks had
-// no deep bass and little above ~3.5 kHz. Running a modern synth voice through
-// that window is most of the era cue.
-function eraBus(ac, dest, lowHz, highHz) {
-  const hp = ac.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = lowHz;
-
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = highHz;
-
-  hp.connect(lp);
-  lp.connect(dest);
-  return { input: hp, nodes: [hp, lp] };
-}
-
 function noiseBuffer(ac, dur) {
   const len = Math.max(1, Math.floor(ac.sampleRate * dur));
   const buf = ac.createBuffer(1, len, ac.sampleRate);
@@ -161,113 +126,6 @@ function brass(ac, dest, freq, at, dur, vol) {
   // Reap the shared nodes off the last oscillator to finish.
   reap(oscs[oscs.length - 1], g, f);
 }
-
-// Soft pad: triangle plus a sine an octave up, slow attack and long release.
-function pad(ac, dest, freq, at, dur, vol) {
-  const g = ac.createGain();
-  g.gain.setValueAtTime(1e-4, at);
-  g.gain.exponentialRampToValueAtTime(vol, at + dur * 0.35);
-  g.gain.exponentialRampToValueAtTime(1e-4, at + dur);
-  g.connect(dest);
-
-  const a = ac.createOscillator();
-  a.type = 'triangle';
-  a.frequency.value = freq;
-
-  const b = ac.createOscillator();
-  b.type = 'sine';
-  b.frequency.value = freq * 2;
-  const bg = ac.createGain();
-  bg.gain.value = 0.3;
-
-  a.connect(g);
-  b.connect(bg);
-  bg.connect(g);
-
-  a.start(at);
-  b.start(at);
-  a.stop(at + dur + 0.05);
-  b.stop(at + dur + 0.05);
-
-  reap(a, g);
-  reap(b, bg);
-}
-
-// Filtered noise with a slow swell: surf, or surface hiss.
-function wash(ac, dest, at, dur, vol, hz, q) {
-  const src = ac.createBufferSource();
-  src.buffer = noiseBuffer(ac, dur);
-
-  const f = ac.createBiquadFilter();
-  f.type = 'bandpass';
-  f.frequency.value = hz;
-  f.Q.value = q;
-
-  const g = ac.createGain();
-  g.gain.setValueAtTime(1e-4, at);
-  g.gain.exponentialRampToValueAtTime(vol, at + dur * 0.4);
-  g.gain.exponentialRampToValueAtTime(1e-4, at + dur);
-
-  src.connect(f);
-  f.connect(g);
-  g.connect(dest);
-
-  src.start(at);
-  src.stop(at + dur);
-  reap(src, f, g);
-}
-
-// --- stings ---------------------------------------------------------------
-
-// A main-title fanfare in Bb: two pickup notes, a rise, then a held triad.
-// Band-limited to sound like it came off a 1930s optical track.
-function airshipSting(ac, bus) {
-  const era = eraBus(ac, bus, 190, 3400);
-  const d = era.input;
-  const t = ac.currentTime + 0.04;
-
-  const Bb3 = midiToHz(58);
-  const D4 = midiToHz(62);
-  const F4 = midiToHz(65);
-  const Bb4 = midiToHz(70);
-
-  brass(ac, d, F4, t + 0.00, 0.15, 0.16);
-  brass(ac, d, F4, t + 0.17, 0.15, 0.16);
-  brass(ac, d, Bb4, t + 0.34, 0.30, 0.20);
-
-  const hold = t + 0.66;
-  brass(ac, d, Bb3, hold, 1.70, 0.13);
-  brass(ac, d, D4, hold + 0.02, 1.66, 0.11);
-  brass(ac, d, F4, hold + 0.04, 1.62, 0.11);
-  brass(ac, d, Bb4, hold + 0.06, 1.58, 0.09);
-
-  // Surface noise, so it reads as a recording rather than a synth.
-  wash(ac, bus, t, 2.5, 0.012, 2200, 0.7);
-}
-
-// Calm, wide, unhurried: a fifth over a slow surf wash.
-function seaSting(ac, bus) {
-  const t = ac.currentTime + 0.04;
-
-  const D3 = midiToHz(50);
-  const A3 = midiToHz(57);
-  const D4 = midiToHz(62);
-
-  pad(ac, bus, D3, t, 3.0, 0.085);
-  pad(ac, bus, A3, t + 0.25, 2.8, 0.065);
-  pad(ac, bus, D4, t + 0.55, 2.4, 0.045);
-
-  wash(ac, bus, t, 3.2, 0.05, 520, 0.5);
-}
-
-// Stings are tied to the wallpaper, not the jukebox: they are the sound of
-// changing the picture. 'none' deliberately has none.
-const STINGS = {
-  airship: airshipSting,
-  'sea-sunset': seaSting,
-  card: airshipSting,
-  'card-mono': airshipSting,
-};
 
 // --- music ----------------------------------------------------------------
 //
@@ -584,7 +442,7 @@ function playBeat(ac, g, t, beat, tr) {
 
 function scheduleMusic() {
   try {
-    if (!ctx || !enabled) return;
+    if (!ctx || !soundOn()) return;
     const tr = getTrackDef(trackId);
     if (!tr || tr.id === 'off') return;
 
@@ -630,28 +488,26 @@ function fadeMusic(to, secs) {
 
 // --- public API -----------------------------------------------------------
 
-let desiredTrack = 'deco';
+let desiredTrack = 'off';
 
+// Silent by default: the jukebox is the only audio control now, so its
+// default is what decides whether the site makes a sound at all.
 function readTrack() {
   try {
     const v = localStorage.getItem(TRACK_KEY);
-    return TRACKS.some((t) => t.id === v) ? v : 'deco';
+    return TRACKS.some((t) => t.id === v) ? v : 'off';
   } catch (e) {
-    return 'deco';
+    return 'off';
   }
 }
 
 desiredTrack = readTrack();
 
-export function isEnabled() {
-  return enabled;
-}
-
 function applyMusic() {
   const ac = getCtx();
   if (!ac) return;
 
-  if (!enabled || !desiredTrack || desiredTrack === 'off') {
+  if (!soundOn()) {
     trackId = 'off';
     fadeMusic(0, 0.4);
     stopMusicTimer();
@@ -669,8 +525,6 @@ function applyMusic() {
   fadeMusic(1, 1.2);
 }
 
-// The jukebox selection, independent of which wallpaper is up. Safe to call
-// before sound is switched on; it is remembered either way.
 export function setTrack(id) {
   desiredTrack = TRACKS.some((t) => t.id === id) ? id : 'off';
   try {
@@ -678,51 +532,29 @@ export function setTrack(id) {
   } catch (e) {
     /* blocked storage is not fatal */
   }
-  if (enabled) applyMusic();
-  else fadeMusic(0, 0.2);
-}
 
-export function getTrack() {
-  return desiredTrack;
-}
-
-export function setEnabled(on) {
-  enabled = !!on;
-  writeStored(enabled);
-
-  if (enabled) {
-    const ac = getCtx();
-    if (ac && ac.state !== 'running') ac.resume();
-    applyMusic();
-  } else {
+  if (!soundOn()) {
     fadeMusic(0, 0.25);
     stopMusicTimer();
     trackId = 'off';
     // Suspending mid-fade clicks, so let the ramp finish first.
     setTimeout(() => {
       try {
-        if (!enabled && ctx) ctx.suspend();
+        if (!soundOn() && ctx) ctx.suspend();
       } catch (e) {
         /* ignore */
       }
     }, 600);
+    return;
   }
-  return enabled;
+
+  const ac = getCtx();
+  if (ac && ac.state !== 'running') ac.resume();
+  applyMusic();
 }
 
-// Call from a user gesture. Does nothing unless sound is switched on.
-export function play(themeId) {
-  if (!enabled) return;
-  try {
-    const ac = getCtx();
-    if (!ac) return;
-    if (ac.state !== 'running') ac.resume();
-    const fn = STINGS[themeId];
-    if (!fn) return;
-    fn(ac, masterBus(ac));
-  } catch (e) {
-    /* audio is never allowed to break the page */
-  }
+export function getTrack() {
+  return desiredTrack;
 }
 
 export function available() {
@@ -733,7 +565,7 @@ document.addEventListener('visibilitychange', () => {
   try {
     if (!ctx) return;
     if (document.hidden) ctx.suspend();
-    else if (enabled) ctx.resume();
+    else if (soundOn()) ctx.resume();
   } catch (e) {
     /* ignore */
   }
@@ -748,7 +580,7 @@ document.addEventListener('visibilitychange', () => {
     // Keep waiting while sound is off. Consuming the one-shot on an
     // interaction that happens before the visitor turns sound on would
     // throw away the only gesture we had to unlock the context with.
-    if (!enabled) return;
+    if (!soundOn()) return;
     window.removeEventListener('pointerdown', fire);
     window.removeEventListener('keydown', fire);
     try {

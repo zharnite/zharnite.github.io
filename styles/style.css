@@ -296,6 +296,7 @@ h1 {
 }
 
 #nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2.4rem;
@@ -466,9 +467,6 @@ h1 {
   box-shadow: inset 2px 0 0 currentColor;
 }
 
-#nav[data-muted='true'] .nav-set-jukebox {
-  opacity: 0.45;
-}
 
 /* Hamburger: hidden until the bar runs out of room. */
 #nav-toggle {
@@ -477,7 +475,7 @@ h1 {
   min-width: 4.4rem;
   min-height: 4.4rem;
   padding: 1rem 0.2rem;
-  margin: 0 0 0 auto;
+  margin: 0;
   line-height: 0;
   color: var(--ink-dim);
   background: none;
@@ -497,49 +495,6 @@ h1 {
   height: 2.2rem;
 }
 
-/* --- floating mute --------------------------------------------------------- */
-
-/* Bottom of the viewport, so it takes the footer-zone ink: --ink-dim is
-   tuned for the sky at the top, and on the airship world that is dark ink
-   over dark terrain down here. */
-#mute {
-  position: fixed;
-  right: 1.8rem;
-  bottom: 1.8rem;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 4.4rem;
-  height: 4.4rem;
-  min-height: 4.4rem;
-  margin: 0;
-  padding: 0;
-  line-height: 0;
-  color: var(--ink-foot);
-  opacity: 0.8;
-  background: none;
-  border: 0;
-  border-radius: 0;
-  cursor: pointer;
-}
-
-#mute:hover,
-#mute:focus-visible {
-  color: var(--ink-foot);
-  opacity: 1;
-}
-
-#mute[aria-pressed='true'] {
-  color: var(--accent-foot);
-}
-
-#mute svg {
-  display: block;
-  width: 2rem;
-  height: 2rem;
-}
-
 /* --- collapsed nav --------------------------------------------------------- */
 /* Two triggers need roughly 370px. Skeleton's .container is 80% of the
    viewport above 550px, so that fits comfortably down to ~520px; the
@@ -556,7 +511,7 @@ h1 {
     display: none;
     position: absolute;
     top: 100%;
-    right: 20px;
+    left: 0;
     min-width: 22rem;
     max-width: calc(100vw - 4rem);
     flex-direction: column;

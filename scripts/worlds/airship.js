@@ -60,24 +60,17 @@ function layoutShip(aspect) {
   const vh = window.innerHeight || 800;
 
   let contentTop = 0.35;
-  let contentBottom = 0.55;
   const row = document.getElementById('content-row');
   if (row) {
     const r = row.getBoundingClientRect();
-    if (r.height > 0) {
-      contentTop = r.top / vh;
-      contentBottom = r.bottom / vh;
-    }
+    if (r.height > 0) contentTop = r.top / vh;
   }
 
-  // Prefer the clear band between the text and the horizon. When the
-  // heading wraps there is no such band, so use the empty sky above it.
-  const bandTop = contentBottom + 0.04;
-  const bandBottom = HORIZON_F - 0.03;
-  const f =
-    bandBottom - bandTop > 0.07
-      ? (bandTop + bandBottom) / 2
-      : Math.max(0.1, contentTop - 0.12);
+  // Always above the heading. Placing it in the gap below the text instead
+  // worked, but meant the ship jumped from one side of the title to the
+  // other as the window widened, which read as a glitch rather than a
+  // composition.
+  const f = Math.max(0.14, contentTop - 0.13);
 
   const ang = Math.atan((0.5 - f) * 2 * tanV);
   shipY = EYE_Y + Math.abs(SHIP_Z) * Math.tan(PITCH + ang);

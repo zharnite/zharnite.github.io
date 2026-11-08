@@ -59,8 +59,7 @@ function getEngine() {
 
 // --- activation -----------------------------------------------------------
 
-async function activate(id, opts) {
-  const fromUser = !!(opts && opts.fromUser);
+async function activate(id) {
   const theme = getTheme(id);
   const my = ++token;
 
@@ -70,8 +69,6 @@ async function activate(id, opts) {
   currentId = theme.id;
   writeTheme(theme.id);
   if (menu) menu.refresh();
-
-  if (fromUser) audio.play(theme.id);
 
   // No wallpaper: tear any world down and let the CSS background show.
   if (!theme.load) {
@@ -103,25 +100,22 @@ function boot() {
   if (navContainer) {
     menu = buildMenu({
       navMount: navContainer,
-      soundMount: document.body,
       themes: THEMES.map((t) => ({ id: t.id, label: t.label })),
       tracks: audio.TRACKS.map((t) => ({ id: t.id, label: t.label })),
       getTheme: () => currentId,
       getTrack: () => audio.getTrack(),
-      onTheme: (id) => activate(id, { fromUser: true }),
+      onTheme: (id) => activate(id),
       onTrack: (id) => audio.setTrack(id),
       soundAvailable: audio.available(),
-      isSoundOn: () => audio.isEnabled(),
-      onSound: (on) => audio.setEnabled(on),
     });
   }
 
-  activate(readTheme(), { fromUser: false });
+  activate(readTheme());
 
   // Exposed for the verification pass.
   window.__bg = {
     stats: () => (engine ? engine.stats() : null),
-    activate: (id) => activate(id, { fromUser: false }),
+    activate: (id) => activate(id),
     scene: () => (engine ? engine.scene : null),
     engineLoaded: () => !!engine,
   };
