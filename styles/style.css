@@ -11,6 +11,101 @@
   --light-color: #ccc;
 }
 
+/* ---------------------------------------------------------------------------
+   Per-world tokens.
+
+   Each world owns its ink, accent, contrast scrim and the CSS gradient that
+   stands in before WebGL boots and forever if WebGL is unavailable. The two
+   worlds have opposite polarity on purpose: the airship is dark ink on a
+   bright hazy sky, the sea is light ink on dusk.
+   --------------------------------------------------------------------------- */
+
+:root,
+[data-theme='airship'] {
+  --ink: #2b241b;
+  --ink-dim: rgba(43, 36, 27, 0.55);
+  --accent: #8a6b3f;
+  --ink-foot: rgba(248, 240, 226, 0.78);
+  --accent-foot: #e8c98f;
+  --scrim: radial-gradient(
+    ellipse 80% 58% at 50% 40%,
+    rgba(243, 230, 203, 0.55),
+    rgba(243, 230, 203, 0) 72%
+  );
+  --fallback: linear-gradient(
+    to bottom,
+    #9c8762 0%,
+    #c4ad86 40%,
+    #f6ead1 66%,
+    #9b8763 69%,
+    #554936 100%
+  );
+}
+
+[data-theme='sea-sunset'] {
+  --ink: #f2ede6;
+  --ink-dim: rgba(242, 237, 230, 0.75);
+  --accent: #ffc27a;
+  --ink-foot: rgba(242, 237, 230, 0.6);
+  --accent-foot: #ffc27a;
+  --scrim: radial-gradient(
+    ellipse 80% 58% at 50% 40%,
+    rgba(8, 14, 28, 0.58),
+    rgba(8, 14, 28, 0) 74%
+  );
+  --fallback: linear-gradient(
+    to bottom,
+    #16233f 0%,
+    #39406e 28%,
+    #8a5a86 45%,
+    #e2785f 56%,
+    #ffb98a 61%,
+    #1a2b45 62%,
+    #0d1a30 100%
+  );
+}
+
+/* Title cards. The glow is dark enough everywhere that one light ink serves
+   the whole page, so unlike the airship these need no separate footer zone. */
+
+[data-theme='card'] {
+  --ink: #f7e9bd;
+  --ink-dim: rgba(247, 233, 189, 0.72);
+  --accent: #f0c84e;
+  --ink-foot: rgba(247, 233, 189, 0.72);
+  --accent-foot: #f0c84e;
+  --scrim: radial-gradient(
+    ellipse 78% 56% at 40% 44%,
+    rgba(4, 20, 24, 0.34),
+    rgba(4, 20, 24, 0) 74%
+  );
+  --fallback: radial-gradient(
+    ellipse 90% 80% at 40% 44%,
+    #4a8d5c 0%,
+    #145049 42%,
+    #06242c 100%
+  );
+}
+
+[data-theme='card-mono'] {
+  --ink: #ece9e2;
+  --ink-dim: rgba(236, 233, 226, 0.7);
+  --accent: #cfc8b6;
+  --ink-foot: rgba(236, 233, 226, 0.7);
+  --accent-foot: #e6e0d0;
+  --scrim: radial-gradient(
+    ellipse 78% 56% at 40% 44%,
+    rgba(0, 0, 0, 0.36),
+    rgba(0, 0, 0, 0) 74%
+  );
+  --fallback: radial-gradient(
+    ellipse 90% 80% at 40% 44%,
+    #6b6b6b 0%,
+    #353535 42%,
+    #101010 100%
+  );
+}
+
 * {
   box-sizing: border-box;
 }
@@ -24,7 +119,47 @@ body {
 
 body {
   font-family: 'Share Tech Mono', monospace;
+  color: var(--ink);
+
+  /* Never white: this is what shows before the canvas fades in, and what
+     stays if WebGL is unavailable. */
+  background: var(--fallback);
+  background-attachment: fixed;
 }
+
+/* --- 3D background -------------------------------------------------------- */
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+#bg-canvas.is-ready {
+  opacity: 1;
+}
+
+#bg-canvas.is-failed {
+  display: none;
+}
+
+/* Contrast scrim. Sits above the canvas and below the content, so legibility
+   never depends on where the sun lands at a given viewport size. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--scrim);
+  pointer-events: none;
+}
+
+/* --- layout (unchanged) --------------------------------------------------- */
 
 h1 {
   font-size: 5rem;
@@ -48,7 +183,7 @@ h1 {
   display: inline-block;
   font-weight: bold;
   font-size: 5.5rem;
-  color: black;
+  color: var(--ink);
 
   /* Underline */
   border-bottom: 1rem solid;
@@ -70,13 +205,126 @@ h1 {
   );
 }
 
+/* --- tagline -------------------------------------------------------------- */
+
+#tagline {
+  margin: 2.4rem 0 2.6rem;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+
+/* --- hobbies button ------------------------------------------------------- */
+
+#link-btn {
+  color: var(--ink);
+  border-color: var(--accent);
+  background-color: transparent;
+}
+
+#link-btn:hover,
+#link-btn:focus {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- footer --------------------------------------------------------------- */
+
 #main-footer {
   margin-top: 0rem;
+  padding-bottom: 1.2rem;
 }
 #main-footer p {
-  color: var(--light-color);
+  margin-bottom: 0.6rem;
+  color: var(--ink-foot);
 }
 #main-footer a {
   text-decoration: none;
   color: inherit;
+}
+#main-footer a:hover {
+  color: var(--accent-foot);
+}
+
+/* --- world switcher ------------------------------------------------------- */
+
+#world-switch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.6rem;
+}
+
+.switch-group {
+  display: flex;
+  gap: 1.2rem;
+}
+
+/* Skeleton styles bare `button` heavily, so reset the parts that matter. */
+.switch-btn {
+  height: auto;
+  min-height: 4.4rem;
+  padding: 1.1rem 0.2rem;
+  line-height: 1.4;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-foot);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.switch-btn:hover,
+.switch-btn:focus-visible {
+  color: var(--accent-foot);
+  border-bottom-color: var(--ink-foot);
+}
+
+.switch-btn[aria-pressed='true'] {
+  color: var(--accent-foot);
+  border-bottom-color: var(--accent-foot);
+}
+
+/* Icon button: same hit area as the word buttons, no underline rule. */
+.switch-sound {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.1rem 0.6rem;
+  border-bottom-color: transparent !important;
+}
+
+.switch-sound svg {
+  display: block;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+/* Muted reads as the quieter state; on is lit like an active world. */
+.switch-sound[aria-pressed='false'] {
+  color: var(--ink-foot);
+  opacity: 0.6;
+}
+
+.switch-sound[aria-pressed='true'] {
+  color: var(--accent-foot);
+  opacity: 1;
+}
+
+.switch-sound:hover,
+.switch-sound:focus-visible {
+  opacity: 1;
+}
+
+/* --- reduced motion ------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  #bg-canvas {
+    transition: none;
+  }
 }

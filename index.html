@@ -9,6 +9,7 @@
   <meta name="description" content="Hi, I'm zharnite! A software engineer and 3D hobbyist." />
   <meta name="designer" content="zharnite" />
   <meta name="keywords" content="zharnite" />
+  <meta name="theme-color" content="#f3e6cb" />
 
   <!-- Title -->
   <title>zharnite</title>
@@ -18,21 +19,49 @@
   <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
   <link rel="manifest" href="images/site.webmanifest" />
 
+  <!-- Resolve the stored world before first paint, so the ink and the
+       fallback gradient are never briefly from the wrong world. -->
+  <script>
+    (function () {
+      var ids = ['airship', 'sea-sunset', 'card', 'card-mono'];
+      var id = 'airship';
+      try {
+        var v = localStorage.getItem('zharnite.world');
+        if (ids.indexOf(v) >= 0) id = v;
+      } catch (e) { /* blocked storage: keep the default */ }
+      document.documentElement.setAttribute('data-theme', id);
+    })();
+  </script>
+
   <!-- Styles -->
   <link rel="stylesheet" href="styles/skeleton.css" />
   <link rel="stylesheet" href="styles/style.css" />
+
+  <!-- Three.js, pinned. The internal ./three.core.min.js import resolves
+       relatively against the same CDN directory, so one entry is enough. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js"
+      }
+    }
+  </script>
 
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/3d468919d3.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
+  <!-- 3D background. Fixed, behind everything, fades in on the first frame. -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
   <div id="main-wrapper">
     <!-- Content -->
     <div id="main-content">
       <div class="container">
         <div class="row" id="content-row">
           <h1>Hi, I'm <span id="name">zharnite</span></h1>
+          <p id="tagline">Passage by air, weather permitting.</p>
           <a id="link-btn" href="https://linktr.ee/zharnite" class="button" target="_blank">Hobbies <i
               class="fa fa-link"></i><i class="fas fa-tree"></i>
           </a>
@@ -50,6 +79,8 @@
       </div>
     </footer>
   </div>
+
+  <script type="module" src="scripts/main.js"></script>
 </body>
 
 </html>
