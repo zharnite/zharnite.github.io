@@ -278,54 +278,95 @@ h1 {
 #nav {
   display: flex;
   align-items: center;
-  gap: 2.8rem;
-  padding: 1.4rem 0;
+  gap: 2.4rem;
+  padding: 1.2rem 0;
 }
 
 #nav-sets {
   display: flex;
   align-items: center;
-  gap: 2.8rem;
-  flex-wrap: wrap;
+  gap: 2.4rem;
 }
 
 .nav-set {
-  display: flex;
-  align-items: baseline;
-  gap: 0.9rem;
-}
-
-.nav-label {
-  font-size: 1rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-
-.nav-opts {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  flex-wrap: wrap;
+  position: relative;
 }
 
 /* Skeleton styles bare `button` heavily, so reset the parts that matter. */
+.nav-trigger,
 .nav-opt {
   height: auto;
-  min-height: 3.2rem;
-  padding: 0.4rem 0.2rem;
   line-height: 1.4;
   font-family: inherit;
-  font-size: 1.2rem;
   font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
   background: none;
   border: 0;
-  border-bottom: 1px solid transparent;
   border-radius: 0;
   cursor: pointer;
+  text-transform: uppercase;
+}
+
+.nav-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  min-height: 4rem;
+  padding: 0.6rem 0.2rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+
+.nav-trigger:hover,
+.nav-trigger:focus-visible,
+.nav-set.is-open .nav-trigger {
+  color: var(--ink);
+}
+
+.nav-label {
+  font-size: inherit;
+  letter-spacing: 0.14em;
+  color: inherit;
+}
+
+.nav-chev {
+  width: 1.1rem;
+  height: 1.1rem;
+  align-self: center;
+  transition: transform 140ms ease;
+}
+
+.nav-set.is-open .nav-chev {
+  transform: rotate(180deg);
+}
+
+.nav-opts {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 100%;
+  padding: 0.6rem 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-edge);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-set.is-open .nav-opts {
+  display: flex;
+}
+
+.nav-opt {
+  min-height: 3.4rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  color: var(--ink-dim);
   white-space: nowrap;
 }
 
@@ -334,11 +375,11 @@ h1 {
   color: var(--ink);
 }
 
-/* Selected is drawn in the page's own ink rather than the accent, so it
-   stays legible on every wallpaper including plain white. */
+/* currentColor, not --accent: on the plain theme --accent is a pale grey
+   that all but disappears, and the marker has to read on every wallpaper. */
 .nav-opt[aria-checked='true'] {
   color: var(--ink);
-  border-bottom-color: var(--accent);
+  box-shadow: inset 2px 0 0 currentColor;
 }
 
 #nav[data-muted='true'] .nav-set-jukebox {
@@ -374,6 +415,9 @@ h1 {
 
 /* --- floating mute --------------------------------------------------------- */
 
+/* Bottom of the viewport, so it takes the footer-zone ink: --ink-dim is
+   tuned for the sky at the top, and on the airship world that is dark ink
+   over dark terrain down here. */
 #mute {
   position: fixed;
   right: 1.8rem;
@@ -387,7 +431,8 @@ h1 {
   min-height: 4.4rem;
   padding: 0;
   line-height: 0;
-  color: var(--ink-dim);
+  color: var(--ink-foot);
+  opacity: 0.8;
   background: none;
   border: 0;
   border-radius: 0;
@@ -396,11 +441,12 @@ h1 {
 
 #mute:hover,
 #mute:focus-visible {
-  color: var(--ink);
+  color: var(--ink-foot);
+  opacity: 1;
 }
 
 #mute[aria-pressed='true'] {
-  color: var(--accent);
+  color: var(--accent-foot);
 }
 
 #mute svg {
@@ -410,11 +456,11 @@ h1 {
 }
 
 /* --- collapsed nav --------------------------------------------------------- */
-/* Skeleton sets .container to 80% of the viewport above 550px, so the usable
-   column is much narrower than the viewport. The two groups measure ~620px,
-   which needs a ~775px viewport; 840 leaves margin for font differences. */
+/* Two triggers need roughly 370px. Skeleton's .container is 80% of the
+   viewport above 550px, so that fits comfortably down to ~520px; the
+   hamburger takes over at 600 to leave room for font differences. */
 
-@media (max-width: 840px) {
+@media (max-width: 600px) {
   #nav-toggle {
     display: inline-flex;
     align-items: center;
@@ -426,12 +472,12 @@ h1 {
     position: absolute;
     top: 100%;
     right: 20px;
-    min-width: 24rem;
+    min-width: 22rem;
     max-width: calc(100vw - 4rem);
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-    padding: 1.4rem 1.6rem;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.8rem 0;
     background: var(--panel-bg);
     border: 1px solid var(--panel-edge);
     backdrop-filter: blur(10px);
@@ -442,10 +488,29 @@ h1 {
     display: flex;
   }
 
-  .nav-set {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.2rem;
+  .nav-trigger {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.8rem 1.4rem;
+  }
+
+  .nav-trigger .nav-chev {
+    margin-left: auto;
+  }
+
+  /* Inside the drawer the lists are an accordion, not a popover: in flow,
+     indented, and without a second panel background on top of the first. */
+  .nav-opts {
+    position: static;
+    padding: 0 0 0.6rem 0;
+    background: none;
+    border: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .nav-opt {
+    padding-left: 2.8rem;
   }
 }
 

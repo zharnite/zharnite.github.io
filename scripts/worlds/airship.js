@@ -45,17 +45,40 @@ const SHIP_PHASE = 0.42; // start already in frame, left of centre
 // phone has no such band -- the heading wraps and runs down toward the
 // horizon -- but it does have a lot of empty sky above the heading, so the
 // ship moves up there instead.
-const SHIP_F_WIDE = 0.64;
-const SHIP_F_TALL = 0.20;
+const HORIZON_F = 0.68; // where the horizon lands, as a fraction of height
 
 let shipY = 88;
 let shipSpan = 700;
 
+// Interpolating the ship's height by aspect ratio walked it straight through
+// the text at middling aspects. What actually matters is where the content
+// block ends, which depends on whether the heading wraps -- so measure it.
+// A world reading the page is a small liberty, but the alternative is
+// guessing at type metrics from the aspect ratio, which is what went wrong.
 function layoutShip(aspect) {
-  const t = Math.min(1, Math.max(0, (aspect - 0.8) / 0.4));
-  const f = SHIP_F_TALL + (SHIP_F_WIDE - SHIP_F_TALL) * t;
-
   const tanV = Math.tan(THREE.MathUtils.degToRad(FOV) / 2);
+  const vh = window.innerHeight || 800;
+
+  let contentTop = 0.35;
+  let contentBottom = 0.55;
+  const row = document.getElementById('content-row');
+  if (row) {
+    const r = row.getBoundingClientRect();
+    if (r.height > 0) {
+      contentTop = r.top / vh;
+      contentBottom = r.bottom / vh;
+    }
+  }
+
+  // Prefer the clear band between the text and the horizon. When the
+  // heading wraps there is no such band, so use the empty sky above it.
+  const bandTop = contentBottom + 0.04;
+  const bandBottom = HORIZON_F - 0.03;
+  const f =
+    bandBottom - bandTop > 0.07
+      ? (bandTop + bandBottom) / 2
+      : Math.max(0.1, contentTop - 0.12);
+
   const ang = Math.atan((0.5 - f) * 2 * tanV);
   shipY = EYE_Y + Math.abs(SHIP_Z) * Math.tan(PITCH + ang);
 
