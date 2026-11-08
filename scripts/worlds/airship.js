@@ -42,9 +42,9 @@ const SHIP_PHASE = 0.42; // start already in frame, left of centre
 
 // Where the ship sits, as a fraction of viewport height. On a wide screen it
 // rides just above the horizon, in the clear band under the text. A narrow
-// phone has no such band -- the heading and tagline both wrap and run down to
-// the horizon -- but it does have a lot of empty sky above the heading, so
-// the ship moves up there instead.
+// phone has no such band -- the heading wraps and runs down toward the
+// horizon -- but it does have a lot of empty sky above the heading, so the
+// ship moves up there instead.
 const SHIP_F_WIDE = 0.64;
 const SHIP_F_TALL = 0.20;
 

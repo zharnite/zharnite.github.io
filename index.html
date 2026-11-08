@@ -9,7 +9,7 @@
   <meta name="description" content="Hi, I'm zharnite! A software engineer and 3D hobbyist." />
   <meta name="designer" content="zharnite" />
   <meta name="keywords" content="zharnite" />
-  <meta name="theme-color" content="#f3e6cb" />
+  <meta name="theme-color" content="#ffffff" />
 
   <!-- Title -->
   <title>zharnite</title>
@@ -23,8 +23,8 @@
        fallback gradient are never briefly from the wrong world. -->
   <script>
     (function () {
-      var ids = ['airship', 'sea-sunset', 'card', 'card-mono'];
-      var id = 'airship';
+      var ids = ['none', 'airship', 'sea-sunset', 'card', 'card-mono'];
+      var id = 'none';
       try {
         var v = localStorage.getItem('zharnite.world');
         if (ids.indexOf(v) >= 0) id = v;
@@ -55,13 +55,18 @@
   <!-- 3D background. Fixed, behind everything, fades in on the first frame. -->
   <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
+  <!-- Top bar. Fixed, so it never shifts the hero down and the worlds keep
+       the composition they were tuned against. -->
+  <header id="topbar">
+    <div class="container"></div>
+  </header>
+
   <div id="main-wrapper">
     <!-- Content -->
     <div id="main-content">
       <div class="container">
         <div class="row" id="content-row">
           <h1>Hi, I'm <span id="name">zharnite</span></h1>
-          <p id="tagline">Passage by air, weather permitting.</p>
           <a id="link-btn" href="https://linktr.ee/zharnite" class="button" target="_blank">Hobbies <i
               class="fa fa-link"></i><i class="fas fa-tree"></i>
           </a>

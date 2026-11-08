@@ -318,6 +318,14 @@ export function createEngine(canvas) {
     }
   }
 
+  // Tear the current world down but keep the renderer alive, for when the
+  // visitor switches back to the plain page and may well switch away again.
+  function clear() {
+    unmount();
+    firstFrameDone = false;
+    canvas.classList.remove('is-ready');
+  }
+
   function destroy() {
     unmount();
     window.removeEventListener('resize', onResize);
@@ -329,6 +337,7 @@ export function createEngine(canvas) {
 
   return {
     setWorld,
+    clear,
     destroy,
     get reduced() {
       return reduced;

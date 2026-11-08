@@ -7,6 +7,7 @@
 // that disconnects every node so repeated plays cannot leak them.
 
 const STORE_KEY = 'zharnite.sound';
+const TRACK_KEY = 'zharnite.track';
 
 let ctx = null;
 let master = null;
@@ -259,9 +260,13 @@ function seaSting(ac, bus) {
   wash(ac, bus, t, 3.2, 0.05, 520, 0.5);
 }
 
+// Stings are tied to the wallpaper, not the jukebox: they are the sound of
+// changing the picture. 'none' deliberately has none.
 const STINGS = {
   airship: airshipSting,
   'sea-sunset': seaSting,
+  card: airshipSting,
+  'card-mono': airshipSting,
 };
 
 // --- music ----------------------------------------------------------------
@@ -273,10 +278,7 @@ const STINGS = {
 // Timing uses the Web Audio clock with a look-ahead scheduler. setTimeout is
 // only accurate enough to decide *what* to schedule, never to place a note.
 
-const BPM = 92;
-const BEAT = 60 / BPM;
 const LOOKAHEAD = 0.8;
-const SWING = 0.66;
 
 // A 1930s sweet-band turnaround in F: I - ii - V, twice round.
 const PROG = [
@@ -284,7 +286,7 @@ const PROG = [
   { root: 38, tones: [0, 3, 7, 10] }, // Dm7
   { root: 43, tones: [0, 3, 7, 10] }, // Gm7
   { root: 36, tones: [0, 4, 7, 10] }, // C7
-  { root: 41, tones: [0, 4, 7, 9] },  // F6
+  { root: 41, tones: [0, 4, 7, 9] }, // F6
   { root: 45, tones: [0, 3, 7, 10] }, // Am7
   { root: 43, tones: [0, 3, 7, 10] }, // Gm7
   { root: 36, tones: [0, 4, 7, 10] }, // C7
@@ -292,11 +294,59 @@ const PROG = [
 
 const F_MAJOR = [0, 2, 4, 5, 7, 9, 11];
 
+// The jukebox. Every track is the same harmony and the same players, wired
+// differently: tempo, who turns up, how talkative the melody is. `pad` shuts
+// the rhythm section off entirely and holds chords for that many beats
+// instead, which is what makes a track ambient rather than a band.
+export const TRACKS = [
+  { id: 'off', label: 'Off' },
+  {
+    id: 'deco',
+    label: 'Deco Band',
+    bpm: 92,
+    swing: 0.66,
+    pad: 0,
+    bass: true,
+    strings: true,
+    brass: true,
+    brushes: true,
+    mel: [0.6, 0.4],
+  },
+  {
+    id: 'parlour',
+    label: 'Parlour',
+    bpm: 72,
+    swing: 0.62,
+    pad: 0,
+    bass: true,
+    strings: true,
+    brass: false,
+    brushes: false,
+    mel: [0.36, 0.16],
+  },
+  {
+    id: 'drift',
+    label: 'Drift',
+    bpm: 58,
+    swing: 0.5,
+    pad: 8,
+    bass: false,
+    strings: true,
+    brass: false,
+    brushes: false,
+    mel: [0, 0],
+  },
+];
+
+function getTrackDef(id) {
+  return TRACKS.find((t) => t.id === id) || null;
+}
+
 let musicNodes = null;
 let musicTimer = null;
 let musicNextT = 0;
 let musicBeat = 0;
-let musicGen = null;
+let trackId = 'off';
 let lastNote = 76;
 
 // The optical-soundtrack chain, built once and shared by every note:
@@ -481,70 +531,73 @@ function pickNote(ch, last) {
   return last;
 }
 
-function decoBeat(ac, g, t, beat) {
+function playBeat(ac, g, t, beat, tr) {
+  const beatLen = 60 / tr.bpm;
   const bar = Math.floor(beat / 4) % PROG.length;
-  const b = beat % 4;
   const ch = PROG[bar];
 
-  // Two-feel bass: root on one, fifth on three.
-  if (b === 0) mBass(ac, g, midiToHz(ch.root), t, BEAT * 0.85, 0.10);
-  if (b === 2) mBass(ac, g, midiToHz(ch.root + 7), t, BEAT * 0.85, 0.085);
-
-  // Strings hold the bar, voices spread a few milliseconds apart so the
-  // section does not sound like one instrument playing a chord.
-  if (b === 0) {
+  // Ambient tracks have no pulse at all, just long overlapping chords.
+  if (tr.pad) {
+    if (beat % tr.pad !== 0) return;
     ch.tones.forEach((iv, i) => {
-      mString(ac, g, midiToHz(ch.root + 12 + iv), t + i * 0.013, BEAT * 3.8, 0.034);
+      mString(ac, g, midiToHz(ch.root + 12 + iv), t + i * 0.05, beatLen * (tr.pad + 0.5), 0.028);
+    });
+    if (Math.random() < 0.5) {
+      lastNote = pickNote(ch, lastNote);
+      mReed(ac, g, midiToHz(lastNote), t + beatLen * 2, beatLen * 2.4, 0.022);
+    }
+    return;
+  }
+
+  const b = beat % 4;
+
+  // Two-feel bass: root on one, fifth on three.
+  if (tr.bass && b === 0) mBass(ac, g, midiToHz(ch.root), t, beatLen * 0.85, 0.1);
+  if (tr.bass && b === 2) mBass(ac, g, midiToHz(ch.root + 7), t, beatLen * 0.85, 0.085);
+
+  // Strings hold the bar, voices a few milliseconds apart so the section
+  // does not sound like one instrument playing a chord.
+  if (tr.strings && b === 0) {
+    ch.tones.forEach((iv, i) => {
+      mString(ac, g, midiToHz(ch.root + 12 + iv), t + i * 0.013, beatLen * 3.8, 0.034);
     });
   }
 
-  // A soft brass answer every other bar.
-  if (b === 0 && bar % 2 === 1) {
-    brass(ac, g.input, midiToHz(ch.root + 12 + ch.tones[2]), t, BEAT * 1.5, 0.038);
+  if (tr.brass && b === 0 && bar % 2 === 1) {
+    brass(ac, g.input, midiToHz(ch.root + 12 + ch.tones[2]), t, beatLen * 1.5, 0.038);
   }
 
-  if (b === 1 || b === 3) mBrush(ac, g, t, 0.026);
+  if (tr.brushes && (b === 1 || b === 3)) mBrush(ac, g, t, 0.026);
 
   // Melody, swung and deliberately full of holes.
-  if (Math.random() < 0.6) {
+  if (Math.random() < tr.mel[0]) {
     lastNote = pickNote(ch, lastNote);
-    mReed(ac, g, midiToHz(lastNote), t, BEAT * 0.52, 0.05);
+    mReed(ac, g, midiToHz(lastNote), t, beatLen * 0.52, 0.05);
   }
-  if (Math.random() < 0.4) {
+  if (Math.random() < tr.mel[1]) {
     lastNote = pickNote(ch, lastNote);
-    mReed(ac, g, midiToHz(lastNote), t + BEAT * SWING, BEAT * 0.28, 0.04);
+    mReed(ac, g, midiToHz(lastNote), t + beatLen * tr.swing, beatLen * 0.28, 0.04);
   }
 
-  if (Math.random() < 0.12) crackle(ac, g, t + Math.random() * BEAT);
-}
-
-// The sea gets air rather than a band: the same harmony, no pulse.
-function calmBeat(ac, g, t, beat) {
-  const bar = Math.floor(beat / 4) % PROG.length;
-  if (beat % 8 !== 0) return;
-  const ch = PROG[bar];
-  ch.tones.forEach((iv, i) => {
-    mString(ac, g, midiToHz(ch.root + 12 + iv), t + i * 0.05, BEAT * 8.5, 0.028);
-  });
-  if (Math.random() < 0.5) {
-    lastNote = pickNote(ch, lastNote);
-    mReed(ac, g, midiToHz(lastNote), t + BEAT * 2, BEAT * 2.4, 0.022);
-  }
+  if (Math.random() < 0.12) crackle(ac, g, t + Math.random() * beatLen);
 }
 
 function scheduleMusic() {
   try {
-    if (!ctx || !enabled || !musicGen) return;
+    if (!ctx || !enabled) return;
+    const tr = getTrackDef(trackId);
+    if (!tr || tr.id === 'off') return;
+
     const ac = ctx;
     if (ac.state !== 'running') return;
 
     const g = musicGraph(ac);
     if (musicNextT < ac.currentTime) musicNextT = ac.currentTime + 0.06;
 
+    const beatLen = 60 / tr.bpm;
     while (musicNextT < ac.currentTime + LOOKAHEAD) {
-      if (musicGen === 'calm') calmBeat(ac, g, musicNextT, musicBeat);
-      else decoBeat(ac, g, musicNextT, musicBeat);
-      musicNextT += BEAT;
+      playBeat(ac, g, musicNextT, musicBeat, tr);
+      musicNextT += beatLen;
       musicBeat++;
     }
   } catch (e) {
@@ -577,7 +630,18 @@ function fadeMusic(to, secs) {
 
 // --- public API -----------------------------------------------------------
 
-let desiredMusic = null;
+let desiredTrack = 'deco';
+
+function readTrack() {
+  try {
+    const v = localStorage.getItem(TRACK_KEY);
+    return TRACKS.some((t) => t.id === v) ? v : 'deco';
+  } catch (e) {
+    return 'deco';
+  }
+}
+
+desiredTrack = readTrack();
 
 export function isEnabled() {
   return enabled;
@@ -587,16 +651,16 @@ function applyMusic() {
   const ac = getCtx();
   if (!ac) return;
 
-  if (!enabled || !desiredMusic) {
-    musicGen = null;
+  if (!enabled || !desiredTrack || desiredTrack === 'off') {
+    trackId = 'off';
     fadeMusic(0, 0.4);
     stopMusicTimer();
     return;
   }
 
   if (ac.state !== 'running') ac.resume();
-  if (musicGen !== desiredMusic) {
-    musicGen = desiredMusic;
+  if (trackId !== desiredTrack) {
+    trackId = desiredTrack;
     musicBeat = 0;
     musicNextT = 0;
   }
@@ -605,11 +669,21 @@ function applyMusic() {
   fadeMusic(1, 1.2);
 }
 
-// Which bed the current world wants: 'deco', 'calm', or null for silence.
-// Safe to call before sound is switched on; it is remembered either way.
-export function setMusic(gen) {
-  desiredMusic = gen || null;
+// The jukebox selection, independent of which wallpaper is up. Safe to call
+// before sound is switched on; it is remembered either way.
+export function setTrack(id) {
+  desiredTrack = TRACKS.some((t) => t.id === id) ? id : 'off';
+  try {
+    localStorage.setItem(TRACK_KEY, desiredTrack);
+  } catch (e) {
+    /* blocked storage is not fatal */
+  }
   if (enabled) applyMusic();
+  else fadeMusic(0, 0.2);
+}
+
+export function getTrack() {
+  return desiredTrack;
 }
 
 export function setEnabled(on) {
@@ -623,7 +697,7 @@ export function setEnabled(on) {
   } else {
     fadeMusic(0, 0.25);
     stopMusicTimer();
-    musicGen = null;
+    trackId = 'off';
     // Suspending mid-fade clicks, so let the ramp finish first.
     setTimeout(() => {
       try {
@@ -671,10 +745,13 @@ document.addEventListener('visibilitychange', () => {
 // first interaction of any kind. They opted in; this only honours it.
 (function armUnlock() {
   const fire = () => {
+    // Keep waiting while sound is off. Consuming the one-shot on an
+    // interaction that happens before the visitor turns sound on would
+    // throw away the only gesture we had to unlock the context with.
+    if (!enabled) return;
     window.removeEventListener('pointerdown', fire);
     window.removeEventListener('keydown', fire);
     try {
-      if (!enabled) return;
       const ac = getCtx();
       if (ac && ac.state !== 'running') ac.resume();
       applyMusic();
