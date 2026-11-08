@@ -20,18 +20,64 @@
    bright hazy sky, the sea is light ink on dusk.
    --------------------------------------------------------------------------- */
 
+/* Wallpaper gradients, defined once. --fallback below points at these, and
+   so do the nav swatches: the preview is literally what you get with no
+   WebGL, rather than a second hand-tuned approximation. */
+:root {
+  --ink-none: #222;
+  --ink-airship: #2b241b;
+  --ink-sea: #f2ede6;
+  --ink-card: #f7e9bd;
+  --ink-card-mono: #ece9e2;
+
+  /* A gradient, not a plain colour: these tokens are used as
+     `background-image` on the preview rows, where a bare colour is invalid
+     and silently leaves the row transparent. */
+  --wp-none: linear-gradient(#fff, #fff);
+  --wp-airship: linear-gradient(
+    to bottom,
+    #9c8762 0%,
+    #c4ad86 40%,
+    #f6ead1 66%,
+    #9b8763 69%,
+    #554936 100%
+  );
+  --wp-sea: linear-gradient(
+    to bottom,
+    #16233f 0%,
+    #39406e 28%,
+    #8a5a86 45%,
+    #e2785f 56%,
+    #ffb98a 61%,
+    #1a2b45 62%,
+    #0d1a30 100%
+  );
+  --wp-card: radial-gradient(
+    ellipse 90% 80% at 40% 44%,
+    #4a8d5c 0%,
+    #145049 42%,
+    #06242c 100%
+  );
+  --wp-card-mono: radial-gradient(
+    ellipse 90% 80% at 40% 44%,
+    #6b6b6b 0%,
+    #353535 42%,
+    #101010 100%
+  );
+}
+
 /* The plain page: what the site was, and what it is again by default. */
 :root,
 [data-theme='none'] {
   --ink-dim: rgba(34, 34, 34, 0.5);
   --panel-bg: rgba(255, 255, 255, 0.97);
   --panel-edge: rgba(0, 0, 0, 0.14);
-  --ink: #222;
+  --ink: var(--ink-none);
   --accent: #bbb;
   --ink-foot: #999;
   --accent-foot: #777;
   --scrim: none;
-  --fallback: #fff;
+  --fallback: var(--wp-none);
 }
 
 /* The one place the original differed: the name was pure black. */
@@ -43,7 +89,7 @@
   --ink-dim: rgba(43, 36, 27, 0.5);
   --panel-bg: rgba(246, 234, 209, 0.97);
   --panel-edge: rgba(43, 36, 27, 0.2);
-  --ink: #2b241b;
+  --ink: var(--ink-airship);
   --accent: #8a6b3f;
   --ink-foot: rgba(248, 240, 226, 0.78);
   --accent-foot: #e8c98f;
@@ -52,21 +98,14 @@
     rgba(243, 230, 203, 0.55),
     rgba(243, 230, 203, 0) 72%
   );
-  --fallback: linear-gradient(
-    to bottom,
-    #9c8762 0%,
-    #c4ad86 40%,
-    #f6ead1 66%,
-    #9b8763 69%,
-    #554936 100%
-  );
+  --fallback: var(--wp-airship);
 }
 
 [data-theme='sea-sunset'] {
   --ink-dim: rgba(242, 237, 230, 0.6);
   --panel-bg: rgba(10, 18, 36, 0.95);
   --panel-edge: rgba(242, 237, 230, 0.2);
-  --ink: #f2ede6;
+  --ink: var(--ink-sea);
   --accent: #ffc27a;
   --ink-foot: rgba(242, 237, 230, 0.6);
   --accent-foot: #ffc27a;
@@ -75,16 +114,7 @@
     rgba(8, 14, 28, 0.58),
     rgba(8, 14, 28, 0) 74%
   );
-  --fallback: linear-gradient(
-    to bottom,
-    #16233f 0%,
-    #39406e 28%,
-    #8a5a86 45%,
-    #e2785f 56%,
-    #ffb98a 61%,
-    #1a2b45 62%,
-    #0d1a30 100%
-  );
+  --fallback: var(--wp-sea);
 }
 
 /* Title cards. The glow is dark enough everywhere that one light ink serves
@@ -94,7 +124,7 @@
   --ink-dim: rgba(247, 233, 189, 0.6);
   --panel-bg: rgba(6, 34, 42, 0.95);
   --panel-edge: rgba(247, 233, 189, 0.2);
-  --ink: #f7e9bd;
+  --ink: var(--ink-card);
   --accent: #f0c84e;
   --ink-foot: rgba(247, 233, 189, 0.72);
   --accent-foot: #f0c84e;
@@ -103,19 +133,14 @@
     rgba(4, 20, 24, 0.34),
     rgba(4, 20, 24, 0) 74%
   );
-  --fallback: radial-gradient(
-    ellipse 90% 80% at 40% 44%,
-    #4a8d5c 0%,
-    #145049 42%,
-    #06242c 100%
-  );
+  --fallback: var(--wp-card);
 }
 
 [data-theme='card-mono'] {
   --ink-dim: rgba(236, 233, 226, 0.6);
   --panel-bg: rgba(18, 18, 18, 0.95);
   --panel-edge: rgba(236, 233, 226, 0.2);
-  --ink: #ece9e2;
+  --ink: var(--ink-card-mono);
   --accent: #cfc8b6;
   --ink-foot: rgba(236, 233, 226, 0.7);
   --accent-foot: #e6e0d0;
@@ -124,12 +149,7 @@
     rgba(0, 0, 0, 0.36),
     rgba(0, 0, 0, 0) 74%
   );
-  --fallback: radial-gradient(
-    ellipse 90% 80% at 40% 44%,
-    #6b6b6b 0%,
-    #353535 42%,
-    #101010 100%
-  );
+  --fallback: var(--wp-card-mono);
 }
 
 * {
@@ -296,6 +316,7 @@ h1 {
 .nav-trigger,
 .nav-opt {
   height: auto;
+  margin: 0;
   line-height: 1.4;
   font-family: inherit;
   font-weight: 400;
@@ -308,7 +329,7 @@ h1 {
 
 .nav-trigger {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.7rem;
   min-height: 4rem;
   padding: 0.6rem 0.2rem;
@@ -332,7 +353,7 @@ h1 {
 .nav-chev {
   width: 1.1rem;
   height: 1.1rem;
-  align-self: center;
+  flex: 0 0 auto;
   transition: transform 140ms ease;
 }
 
@@ -346,10 +367,11 @@ h1 {
   top: 100%;
   left: 0;
   z-index: 1;
+  margin-top: -0.7rem;
   flex-direction: column;
   align-items: stretch;
   min-width: 100%;
-  padding: 0.6rem 0;
+  padding: 0.4rem 0;
   background: var(--panel-bg);
   border: 1px solid var(--panel-edge);
   backdrop-filter: blur(10px);
@@ -361,6 +383,9 @@ h1 {
 }
 
 .nav-opt {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   min-height: 3.4rem;
   padding: 0.6rem 1.4rem;
   font-size: 1.2rem;
@@ -368,6 +393,65 @@ h1 {
   text-align: left;
   color: var(--ink-dim);
   white-space: nowrap;
+}
+
+/* In the wallpaper list each row is painted with the wallpaper itself, so
+   the list is a stack of strips of the real thing. Rows butt together with
+   no panel padding, which is what makes it read as one sheet. */
+.nav-opts-preview {
+  padding: 0;
+}
+
+.nav-opts-preview .nav-opt {
+  min-height: 3.8rem;
+  padding: 0.9rem 1.4rem;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* No scrim: a uniform dark wash made the plain white page look charcoal and
+   flattened the two light wallpapers. Each row carries the wallpaper as it
+   is, with that wallpaper's own ink and a shadow in the opposite tone to
+   keep the label readable over whatever band it lands on. */
+.nav-opts-preview .nav-opt[data-value='none'] {
+  background-image: var(--wp-none);
+  color: var(--ink-none);
+}
+.nav-opts-preview .nav-opt[data-value='airship'] {
+  background-image: var(--wp-airship);
+  color: var(--ink-airship);
+}
+.nav-opts-preview .nav-opt[data-value='sea-sunset'] {
+  background-image: var(--wp-sea);
+  color: var(--ink-sea);
+}
+.nav-opts-preview .nav-opt[data-value='card'] {
+  background-image: var(--wp-card);
+  color: var(--ink-card);
+}
+.nav-opts-preview .nav-opt[data-value='card-mono'] {
+  background-image: var(--wp-card-mono);
+  color: var(--ink-card-mono);
+}
+
+.nav-opts-preview .nav-opt[data-value='none'],
+.nav-opts-preview .nav-opt[data-value='airship'] {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.nav-opts-preview .nav-opt[data-value='sea-sunset'],
+.nav-opts-preview .nav-opt[data-value='card'],
+.nav-opts-preview .nav-opt[data-value='card-mono'] {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.nav-opts-preview .nav-opt:hover,
+.nav-opts-preview .nav-opt:focus-visible {
+  filter: brightness(1.12);
+}
+
+.nav-opts-preview .nav-opt[aria-checked='true'] {
+  box-shadow: inset 3px 0 0 currentColor;
 }
 
 .nav-opt:hover,
@@ -393,7 +477,7 @@ h1 {
   min-width: 4.4rem;
   min-height: 4.4rem;
   padding: 1rem 0.2rem;
-  margin-left: auto;
+  margin: 0 0 0 auto;
   line-height: 0;
   color: var(--ink-dim);
   background: none;
@@ -429,6 +513,7 @@ h1 {
   width: 4.4rem;
   height: 4.4rem;
   min-height: 4.4rem;
+  margin: 0;
   padding: 0;
   line-height: 0;
   color: var(--ink-foot);

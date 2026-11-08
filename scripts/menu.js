@@ -62,7 +62,7 @@ function soundIcon(on) {
 // One labelled dropdown: a trigger and the radiogroup it reveals. The
 // trigger does not repeat the current value; the open list already marks
 // it, and two places showing the same state is one too many.
-function buildSet(label, items, getSelected, onPick, onToggle) {
+function buildSet(label, items, getSelected, onPick, onToggle, preview) {
   const set = h('div', { className: 'nav-set' });
 
   const trigger = h('button', { type: 'button', className: 'nav-trigger' }, [
@@ -72,7 +72,10 @@ function buildSet(label, items, getSelected, onPick, onToggle) {
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-haspopup', 'true');
 
-  const group = h('div', { className: 'nav-opts', role: 'radiogroup' });
+  const group = h('div', {
+    className: preview ? 'nav-opts nav-opts-preview' : 'nav-opts',
+    role: 'radiogroup',
+  });
   group.setAttribute('aria-label', label);
 
   const buttons = [];
@@ -96,7 +99,11 @@ function buildSet(label, items, getSelected, onPick, onToggle) {
   }
 
   items.forEach((item) => {
-    const b = h('button', { type: 'button', className: 'nav-opt', textContent: item.label });
+    // In a preview group the row itself is painted with that wallpaper, so
+    // it is a strip of the thing rather than a label naming it.
+    const b = h('button', { type: 'button', className: 'nav-opt' }, [
+      h('span', { className: 'nav-opt-text', textContent: item.label }),
+    ]);
     b.setAttribute('role', 'radio');
     b.dataset.value = item.id;
     b.addEventListener('click', () => {
@@ -177,13 +184,13 @@ export function buildMenu(opts) {
     });
   }
 
-  const wallpaper = buildSet('Wallpaper', themes, getTheme, onTheme, closeOthers);
+  const wallpaper = buildSet('Wallpaper', themes, getTheme, onTheme, closeOthers, true);
   allSets.push(wallpaper);
   sets.appendChild(wallpaper.el);
 
   let jukebox = null;
   if (soundAvailable) {
-    jukebox = buildSet('Jukebox', tracks, getTrack, onTrack, closeOthers);
+    jukebox = buildSet('Jukebox', tracks, getTrack, onTrack, closeOthers, false);
     jukebox.el.classList.add('nav-set-jukebox');
     allSets.push(jukebox);
     sets.appendChild(jukebox.el);
