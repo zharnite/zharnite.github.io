@@ -22,16 +22,40 @@ function getCtx() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
-    ctx = new AC();
-    ctx.onstatechange = () => {
+    const c = new AC();
+    // Browsers sometimes park a context on their own. Pick it back up, but
+    // only while a track is meant to be playing: this used to fire on every
+    // state change, including the one Off asked for, and undid it.
+    c.onstatechange = () => {
       try {
-        if (ctx.state !== 'running' && !document.hidden) ctx.resume();
+        if (c !== ctx || !soundOn() || document.hidden) return;
+        if (c.state !== 'running' && c.state !== 'closed') c.resume();
       } catch (e) {
         /* ignore */
       }
     };
+    ctx = c;
   }
   return ctx;
+}
+
+// Off means off. Suspending would leave the hiss loop and both LFOs alive,
+// and would freeze any notes still sounding so that they picked up again
+// under the next track. Closing the context releases all of it; the next
+// track chosen starts a fresh one inside its own click.
+function shutDown() {
+  const c = ctx;
+  ctx = null;
+  master = null;
+  musicNodes = null;
+  if (!c) return;
+  try {
+    c.onstatechange = null;
+    const p = c.close();
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 function masterBus(ac) {
@@ -489,6 +513,7 @@ function fadeMusic(to, secs) {
 // --- public API -----------------------------------------------------------
 
 let desiredTrack = 'off';
+let offTimer = 0;
 
 // Silent by default: the jukebox is the only audio control now, so its
 // default is what decides whether the site makes a sound at all.
@@ -533,17 +558,16 @@ export function setTrack(id) {
     /* blocked storage is not fatal */
   }
 
+  clearTimeout(offTimer);
+
   if (!soundOn()) {
     fadeMusic(0, 0.25);
     stopMusicTimer();
     trackId = 'off';
-    // Suspending mid-fade clicks, so let the ramp finish first.
-    setTimeout(() => {
-      try {
-        if (!soundOn() && ctx) ctx.suspend();
-      } catch (e) {
-        /* ignore */
-      }
+    // Cutting the context mid-fade clicks, so let the ramp finish first. If
+    // a track is chosen again in the meantime, the timer is cancelled above.
+    offTimer = setTimeout(() => {
+      if (!soundOn()) shutDown();
     }, 600);
     return;
   }

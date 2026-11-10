@@ -257,6 +257,8 @@ export function createEngine(canvas) {
     }
   }
 
+  // While the context is lost the canvas is hidden and the CSS gradient
+  // stands in. preventDefault is what tells the browser we want it back.
   function onContextLost(e) {
     e.preventDefault();
     failed = true;
@@ -265,10 +267,23 @@ export function createEngine(canvas) {
     canvas.classList.add('is-failed');
   }
 
+  // Everything on the GPU went with the old context, so the world is torn
+  // down and built again rather than patched up. Without this a single loss
+  // (routine on phones when a tab is backgrounded) switched 3D off until the
+  // page was reloaded.
+  function onContextRestored() {
+    failed = false;
+    firstFrameDone = false;
+    canvas.classList.remove('is-failed');
+    const w = world;
+    if (w) setWorld(w);
+  }
+
   window.addEventListener('resize', onResize, { passive: true });
   window.addEventListener('pointermove', onPointer, { passive: true });
   document.addEventListener('visibilitychange', onVisibility);
   canvas.addEventListener('webglcontextlost', onContextLost, false);
+  canvas.addEventListener('webglcontextrestored', onContextRestored, false);
 
   // --- world lifecycle ----------------------------------------------------
 
@@ -293,6 +308,11 @@ export function createEngine(canvas) {
   function setWorld(mod) {
     unmount();
     world = mod;
+
+    // With the context lost there is nothing to build into. Remember the
+    // choice; onContextRestored mounts it when the context comes back.
+    if (failed) return;
+
     applyCamera();
 
     const ctx = {
@@ -332,6 +352,7 @@ export function createEngine(canvas) {
     window.removeEventListener('pointermove', onPointer);
     document.removeEventListener('visibilitychange', onVisibility);
     canvas.removeEventListener('webglcontextlost', onContextLost);
+    canvas.removeEventListener('webglcontextrestored', onContextRestored);
     renderer.dispose();
   }
 

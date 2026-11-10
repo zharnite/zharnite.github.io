@@ -28,10 +28,14 @@ function chevron() {
   );
 }
 
+// The lines start at the very edge of the viewBox (0.85 is half the stroke,
+// so the round cap just touches it). They used to start 3 units in, which
+// left the visible icon 2px right of the button border and underline that
+// its box was correctly aligned with.
 function burgerIcon() {
   return (
     '<svg viewBox="0 0 22 22" aria-hidden="true" focusable="false">' +
-    '<path d="M3 6h16M3 11h16M3 16h16" fill="none" stroke="currentColor" ' +
+    '<path d="M0.85 6h16M0.85 11h16M0.85 16h16" fill="none" stroke="currentColor" ' +
     'stroke-width="1.7" stroke-linecap="round"/></svg>'
   );
 }
@@ -39,7 +43,7 @@ function burgerIcon() {
 function closeIcon() {
   return (
     '<svg viewBox="0 0 22 22" aria-hidden="true" focusable="false">' +
-    '<path d="M5 5l12 12M17 5L5 17" fill="none" stroke="currentColor" ' +
+    '<path d="M2.85 5l12 12M14.85 5l-12 12" fill="none" stroke="currentColor" ' +
     'stroke-width="1.7" stroke-linecap="round"/></svg>'
   );
 }
@@ -76,11 +80,15 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
     if (!buttons.some((b) => b.tabIndex === 0) && buttons[0]) buttons[0].tabIndex = 0;
   }
 
+  // Arrows move the selection and leave the list open, as a radiogroup
+  // should. This used to go through click(), which also closes the list, so
+  // one key press selected, closed, and dropped focus on <body>.
   function move(from, delta) {
     const i = buttons.indexOf(from);
     const next = buttons[(i + delta + buttons.length) % buttons.length];
+    onPick(next.dataset.value);
+    paint();
     next.focus();
-    next.click();
   }
 
   items.forEach((item) => {
@@ -94,7 +102,7 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
     b.addEventListener('click', () => {
       onPick(item.id);
       paint();
-      setOpen(false);
+      setOpen(false, true);
     });
     b.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -111,10 +119,13 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
 
   let open = false;
 
-  function setOpen(next) {
+  // Closing hides whatever option had focus. Unless focus is sent back to
+  // the trigger it falls to <body> and a keyboard user loses their place.
+  function setOpen(next, refocus) {
     open = next;
     set.classList.toggle('is-open', open);
     trigger.setAttribute('aria-expanded', String(open));
+    if (!open && refocus) trigger.focus();
   }
 
   trigger.addEventListener('click', () => {
@@ -131,7 +142,13 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
   set.appendChild(group);
   paint();
 
-  const api = { el: set, paint, close: () => setOpen(false), trigger };
+  const api = {
+    el: set,
+    paint,
+    trigger,
+    isOpen: () => open,
+    close: (refocus) => setOpen(false, !!refocus),
+  };
   return api;
 }
 
@@ -208,13 +225,21 @@ export function buildMenu(opts) {
     if (barOpen) setBarOpen(false, false);
   }
 
+  // Escape closes the innermost open thing and is only swallowed when it
+  // did: the first press closes a dropdown, the next the drawer, and with
+  // nothing open the key is left alone for the rest of the page.
   function onKey(e) {
     if (e.key !== 'Escape') return;
-    e.preventDefault();
-    const hadDropdown = allSets.some((s) => s.el.classList.contains('is-open'));
-    closeOthers(null);
-    if (hadDropdown) return; // first Escape closes the dropdown
-    if (barOpen) setBarOpen(false, true);
+    const openSet = allSets.find((s) => s.isOpen());
+    if (openSet) {
+      e.preventDefault();
+      openSet.close(true);
+      return;
+    }
+    if (barOpen) {
+      e.preventDefault();
+      setBarOpen(false, true);
+    }
   }
 
   // Registered once rather than per open/close: the handlers are cheap and
