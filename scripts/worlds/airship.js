@@ -2,16 +2,39 @@ import * as THREE from 'three';
 import * as skySepia from '../shaders/sky-sepia.js';
 import * as skylineShader from '../shaders/skyline.js';
 import * as gradeShader from '../shaders/grade.js';
+import * as tenementShader from '../shaders/tenements.js';
+import { buildSkyship } from './skyship.js';
 
 // --- palette (authored to final on-screen values) -------------------------
 
 const C = {
+  haze: 0xf0e3c6,
   zenith: 0x9c8762,
   upper: 0xc4ad86,
   horizon: 0xf6ead1,
   sunGlow: 0xfffaf0,
-  hull: 0x3e352a,
-  hullRim: 0x8a7a60,
+};
+
+// The ship is 900 units off, between the third and fourth rows of the city,
+// so its tones sit between theirs. The old flat hull colour was darker than
+// the nearest buildings, which is a large part of why it looked pasted on.
+// Canvas above and timber below: the envelope is the paler of the two, so the
+// craft reads as two things joined rather than one dark lump.
+const SHIP = {
+  envelope: { shade: 0x6e6150, lit: 0xb9a888, rim: 0xd6c5a0 },
+  hull: { shade: 0x3f3528, lit: 0x6f5e46, rim: 0xa08a66 },
+  haze: 0xf0e3c6,
+  smoke: 0x4a4033,
+};
+const SHIP_SCALE = 1.2;
+
+// A second ship, a long way off, going the other way. It rides low, just
+// over the far rooftops, and slips behind the near towers as it goes.
+const FAR = {
+  z: -2100,
+  period: 230, // seconds for a crossing
+  phase: 0.3,
+  haze: 0.5,
 };
 
 // Horizon sits at ~68% of viewport height. At fov 45 that is a pitch of
@@ -27,26 +50,94 @@ const EYE_Y = 60;
 // `count` is buildings across the whole quad, of which about a third is on
 // screen -- more and smaller as the city recedes. `speed` is in uv units, so
 // nearer layers drift faster and that difference is the parallax.
+//
+// `mist` is how far a layer fades into haze below its rooflines: strong in
+// the distance, almost nothing on the nearest row, because the footer text
+// sits on that one and needs it kept dark.
 const QUAD = 0.6;
+const FRAME_BOTTOM_ANG = 0.245; // radians below the horizon at the frame's lower edge
 const LAYERS = [
-  { z: -2600, color: 0xcdb896, ang: 0.050, angVar: 0.034, count: 90, speed: 0.00035, soft: 0.0016, opacity: 0.78, windows: 0.0, seed: 1.7 },
-  { z: -1800, color: 0xb9a27e, ang: 0.070, angVar: 0.046, count: 70, speed: 0.00060, soft: 0.0014, opacity: 0.86, windows: 0.0, seed: 4.3 },
-  { z: -1200, color: 0x9b8763, ang: 0.095, angVar: 0.060, count: 52, speed: 0.00105, soft: 0.0012, opacity: 0.92, windows: 0.0, seed: 8.1 },
-  { z: -700, color: 0x6e6046, ang: 0.135, angVar: 0.080, count: 38, speed: 0.00185, soft: 0.0010, opacity: 0.96, windows: 0.020, seed: 12.9 },
-  { z: -380, color: 0x473d2d, ang: 0.200, angVar: 0.110, count: 26, speed: 0.00320, soft: 0.0008, opacity: 1.0, windows: 0.028, seed: 19.4 },
+  { z: -2600, color: 0xcdb896, ang: 0.050, angVar: 0.034, count: 90, speed: 0.00035, soft: 0.0016, opacity: 0.78, windows: 0.0, seed: 1.7, mist: 0.50 },
+  { z: -1800, color: 0xb9a27e, ang: 0.070, angVar: 0.046, count: 70, speed: 0.00060, soft: 0.0014, opacity: 0.86, windows: 0.0, seed: 4.3, mist: 0.52 },
+  { z: -1200, color: 0x9b8763, ang: 0.095, angVar: 0.060, count: 52, speed: 0.00105, soft: 0.0012, opacity: 0.92, windows: 0.0, seed: 8.1, mist: 0.48 },
+  { z: -700, color: 0x6e6046, ang: 0.135, angVar: 0.080, count: 38, speed: 0.00185, soft: 0.0010, opacity: 0.96, windows: 0.020, seed: 12.9, mist: 0.40 },
+  { z: -380, color: 0x473d2d, ang: 0.200, angVar: 0.110, count: 26, speed: 0.00320, soft: 0.0008, opacity: 1.0, windows: 0.028, seed: 19.4, mist: 0.12 },
 ];
+
+// The near city: one wall of tenement towers, close enough to see into. It
+// scrolls at the same ground speed as the rows behind it (their uv speeds all
+// work out to about four units a second), so the parallax stays honest.
+const NEAR = {
+  z: -230,
+  scroll: 4.0,
+  wall: 0x33291d,
+  metal: 0x7a6a50,
+  glow: 0xf0dcae,
+  dark: 0x1f1a13,
+  haze: 0.05,
+};
+const NEAR_BOTTOM = -12; // the quad's lower edge, below the frame
+const NEAR_HEIGHT = 140;
 
 const SHIP_Z = -900;
 const SHIP_PERIOD = 75; // seconds for a full crossing
 const SHIP_PHASE = 0.42; // start already in frame, left of centre
 
-// Where the ship sits, as a fraction of viewport height. On a wide screen it
-// rides just above the horizon, in the clear band under the text. A narrow
-// phone has no such band -- the heading wraps and runs down toward the
-// horizon -- but it does have a lot of empty sky above the heading, so the
-// ship moves up there instead.
-const HORIZON_F = 0.68; // where the horizon lands, as a fraction of height
+// --- the two times of day ------------------------------------------------------
+//
+// Everything above is the hazy afternoon. Dusk is the same city, ship and
+// camera with the light changed: the sun down on the horizon, the sky gone
+// plum, the rows of buildings dark against it, and most of the lamps on.
+// `rows` runs far to near and overrides each layer's colour, glints and mist.
 
+const DAY = {
+  sky: C,
+  cloud: 0.55,
+  sunElev: 20,
+  rows: null, // the LAYERS table as written
+  glint: 0xffffff,
+  ship: SHIP,
+  near: NEAR,
+  litShare: 0.42,
+  grade: { sepia: 0.95, keep: 0.0, vignette: 0.42, lift: 0.09 },
+};
+
+const DUSK = {
+  sky: {
+    haze: 0x8a6a5c,
+    zenith: 0x1d1a28,
+    upper: 0x43343f,
+    horizon: 0xd99a66,
+    sunGlow: 0x8a4f22,
+  },
+  cloud: 0.35,
+  sunElev: 4,
+  rows: [
+    { color: 0x8f7466, windows: 0.0, mist: 0.46 },
+    { color: 0x6f5a54, windows: 0.05, mist: 0.46 },
+    { color: 0x52423f, windows: 0.1, mist: 0.42 },
+    { color: 0x372c2c, windows: 0.16, mist: 0.34 },
+    { color: 0x231c1d, windows: 0.2, mist: 0.1 },
+  ],
+  glint: 0xffc878,
+  ship: {
+    envelope: { shade: 0x2c2529, lit: 0x8a6650, rim: 0xe0a56e },
+    hull: { shade: 0x1d181a, lit: 0x5a4436, rim: 0xc98f5e },
+    haze: 0x8a6a5c,
+    smoke: 0x1a1618,
+  },
+  near: { ...NEAR, wall: 0x191415, metal: 0x4d3e38, glow: 0xffd28a, dark: 0x0c0a0b, haze: 0.03 },
+  litShare: 0.6,
+  // Hand-tinted rather than toned: over half of the scene's own colour is let
+  // through, so the plum sky and the amber lamps survive the print.
+  grade: { sepia: 0.9, keep: 0.62, vignette: 0.6, lift: 0.06 },
+};
+
+let P = DAY;
+
+let farShip = null;
+let farY = 140;
+let farSpan = 1500;
 let shipY = 88;
 let shipSpan = 700;
 
@@ -81,15 +172,98 @@ function layoutShip(aspect) {
   shipSpan = Math.max(250, halfVisible * 1.6);
 
   if (ship) ship.position.y = shipY;
+
+  // The far ship keeps to the strip between the page's content and the
+  // horizon. Where the content runs down to the horizon there is no strip,
+  // and it stays home.
+  let contentBottom = 0.55;
+  if (row) {
+    const r = row.getBoundingClientRect();
+    if (r.height > 0) contentBottom = r.bottom / vh;
+  }
+  const farF = Math.max(0.635, contentBottom + 0.035);
+  const farD = Math.abs(FAR.z);
+  farY = EYE_Y + farD * Math.tan(PITCH + Math.atan((0.5 - farF) * 2 * tanV));
+  farSpan = farD * aspect * tanV + 120;
+  if (farShip) farShip.visible = farF < 0.662;
+}
+
+// World height at distance d of the point a fraction f down the viewport.
+function worldYAt(f, d) {
+  const tanV = Math.tan(THREE.MathUtils.degToRad(FOV) / 2);
+  return EYE_Y + d * Math.tan(PITCH + Math.atan((0.5 - f) * 2 * tanV));
+}
+
+// The towers may stand as tall as the gap under the page's content allows and
+// no taller, so they never climb behind the heading or the button. Their
+// lamps go out below the footer line, which keeps that text on dark wall.
+function layoutCity() {
+  if (!nearMat) return;
+  const vh = window.innerHeight || 800;
+  const d = Math.abs(NEAR.z);
+
+  let contentBottom = 0.55;
+  const row = document.getElementById('content-row');
+  if (row) {
+    const r = row.getBoundingClientRect();
+    if (r.height > 0) contentBottom = r.bottom / vh;
+  }
+  let footerTop = 0.93;
+  const foot = document.getElementById('main-footer');
+  if (foot) {
+    const r = foot.getBoundingClientRect();
+    if (r.height > 0) footerTop = r.top / vh;
+  }
+
+  // Eight units of headroom for water tanks and aerials.
+  const top = worldYAt(Math.max(contentBottom + 0.04, 0.5), d) - 8;
+  nearMat.uniforms.uTop.value = THREE.MathUtils.clamp(top, 24, 96);
+  nearMat.uniforms.uGloomY.value = worldYAt(Math.min(footerTop, 0.97) - 0.03, d);
+}
+
+function buildNear() {
+  const d = Math.abs(NEAR.z);
+  const geo = track(new THREE.PlaneGeometry(d * 3.2, NEAR_HEIGHT));
+  const baseY = NEAR_BOTTOM + NEAR_HEIGHT / 2;
+  nearMat = track(
+    new THREE.ShaderMaterial({
+      vertexShader: tenementShader.vertexShader,
+      fragmentShader: tenementShader.fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uBaseY: { value: baseY },
+        uScroll: { value: NEAR.scroll },
+        uSeed: { value: 3.1 },
+        uTop: { value: 70 },
+        uGloomY: { value: 12 },
+        uLife: { value: 1 },
+        uHazeAmt: { value: P.near.haze },
+        uLitShare: { value: P.litShare },
+        uWall: { value: new THREE.Color(P.near.wall) },
+        uMetal: { value: new THREE.Color(P.near.metal) },
+        uGlow: { value: new THREE.Color(P.near.glow) },
+        uVoid: { value: new THREE.Color(P.near.dark) },
+        uHaze: { value: new THREE.Color(P.sky.haze) },
+      },
+      transparent: true,
+      depthWrite: false,
+    })
+  );
+  const mesh = new THREE.Mesh(geo, nearMat);
+  mesh.position.set(0, baseY, NEAR.z);
+  mesh.renderOrder = 0;
+  return mesh;
 }
 
 let disposables = [];
+let nearMat = null;
 let group = null;
 let skyMat = null;
 let skylineMats = [];
-let shipMats = [];
 let ship = null;
 let gradeUniforms = null;
+let renderer = null;
+const bufSize = new THREE.Vector2();
 
 function track(obj) {
   disposables.push(obj);
@@ -101,7 +275,6 @@ function track(obj) {
 // portrait frame.
 const FOV = 45;
 const SUN_X_FRAC = 0.70;
-const SUN_ELEV_DEG = 20;
 
 let sunVec = null;
 
@@ -109,7 +282,7 @@ function updateSun(aspect) {
   if (!sunVec) return;
   const tanH = aspect * Math.tan(THREE.MathUtils.degToRad(FOV) / 2);
   const azim = Math.atan((SUN_X_FRAC * 2 - 1) * tanH);
-  const elev = THREE.MathUtils.degToRad(SUN_ELEV_DEG);
+  const elev = THREE.MathUtils.degToRad(P.sunElev);
   sunVec
     .set(
       Math.sin(azim) * Math.cos(elev),
@@ -128,11 +301,11 @@ function buildSky() {
       uniforms: {
         uTime: { value: 0 },
         uSunDir: { value: sunVec },
-        uZenith: { value: new THREE.Color(C.zenith) },
-        uUpper: { value: new THREE.Color(C.upper) },
-        uHorizon: { value: new THREE.Color(C.horizon) },
-        uSunGlow: { value: new THREE.Color(C.sunGlow) },
-        uCloud: { value: 0.55 },
+        uZenith: { value: new THREE.Color(P.sky.zenith) },
+        uUpper: { value: new THREE.Color(P.sky.upper) },
+        uHorizon: { value: new THREE.Color(P.sky.horizon) },
+        uSunGlow: { value: new THREE.Color(P.sky.sunGlow) },
+        uCloud: { value: P.cloud },
       },
       side: THREE.BackSide,
       depthWrite: false,
@@ -149,9 +322,16 @@ function buildLayers() {
   skylineMats = [];
 
   LAYERS.forEach((L, i) => {
+    const R = P.rows ? P.rows[i] : L;
     const d = Math.abs(L.z);
     const w = d * 3.2;
     const h = d * QUAD;
+
+    // A layer is only visible down to where the next row's rooflines start
+    // (or the bottom of the frame, for the nearest). The mist should reach
+    // full strength over exactly that band, or most of it is spent unseen.
+    const nextAng = i + 1 < LAYERS.length ? LAYERS[i + 1].ang : FRAME_BOTTOM_ANG;
+    const hazeDepth = ((nextAng - L.ang) / QUAD) * 1.15;
 
     const geo = track(new THREE.PlaneGeometry(w, h));
     const mat = track(
@@ -159,7 +339,7 @@ function buildLayers() {
         vertexShader: skylineShader.vertexShader,
         fragmentShader: skylineShader.fragmentShader,
         uniforms: {
-          uColor: { value: new THREE.Color(L.color) },
+          uColor: { value: new THREE.Color(R.color) },
           uTime: { value: 0 },
           uSeed: { value: L.seed },
           uSpeed: { value: L.speed },
@@ -168,7 +348,13 @@ function buildLayers() {
           uCount: { value: L.count },
           uSoft: { value: L.soft },
           uOpacity: { value: L.opacity },
-          uWindows: { value: L.windows },
+          uWindows: { value: R.windows },
+          uGlint: { value: new THREE.Color(P.glint) },
+          uHaze: { value: new THREE.Color(P.sky.haze) },
+          uHazeAmt: { value: R.mist },
+          uHazeDepth: { value: hazeDepth },
+          // The farthest two rows are too small for it to be anything but noise.
+          uClutter: { value: i >= 2 ? 1 : 0 },
         },
         transparent: true,
         depthWrite: false,
@@ -187,93 +373,17 @@ function buildLayers() {
   return g;
 }
 
-function shipMaterial(color) {
-  const mat = track(
-    new THREE.ShaderMaterial({
-      vertexShader: /* glsl */ `
-        varying vec3 vNv;
-        varying vec3 vPv;
-        void main(){
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          vPv = mv.xyz;
-          vNv = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * mv;
-        }
-      `,
-      fragmentShader: /* glsl */ `
-        uniform vec3  uColor;
-        uniform vec3  uRim;
-        uniform float uRimStrength;
-        varying vec3 vNv;
-        varying vec3 vPv;
-        void main(){
-          vec3 V = normalize(-vPv);
-          float rim = pow(1.0 - clamp(dot(normalize(vNv), V), 0.0, 1.0), 3.0);
-          gl_FragColor = vec4(mix(uColor, uRim, rim * uRimStrength), 1.0);
-        }
-      `,
-      uniforms: {
-        uColor: { value: new THREE.Color(color) },
-        uRim: { value: new THREE.Color(C.hullRim) },
-        uRimStrength: { value: 0.35 },
-      },
-    })
-  );
-  shipMats.push(mat);
-  return mat;
-}
-
-function buildShip() {
-  const g = new THREE.Group();
-  const mat = shipMaterial(C.hull);
-
-  // Hull: an ellipsoid at a classic ~8:1 rigid-airship ratio.
-  const hullGeo = track(new THREE.SphereGeometry(1, 28, 18));
-  const hull = new THREE.Mesh(hullGeo, mat);
-  hull.scale.set(50, 13, 13);
-  g.add(hull);
-
-  // Tail fins: vertical and horizontal.
-  const finGeo = track(new THREE.BoxGeometry(16, 20, 1.4));
-  const finV = new THREE.Mesh(finGeo, mat);
-  finV.position.set(-46, 0, 0);
-  g.add(finV);
-
-  const finH = new THREE.Mesh(finGeo, mat);
-  finH.position.set(-46, 0, 0);
-  finH.rotation.z = Math.PI / 2;
-  finH.scale.set(1, 1.35, 1);
-  g.add(finH);
-
-  // Gondola, slung forward under the hull.
-  const gondolaGeo = track(new THREE.BoxGeometry(16, 5, 7));
-  const gondola = new THREE.Mesh(gondolaGeo, mat);
-  gondola.position.set(12, -13.5, 0);
-  g.add(gondola);
-
-  // Two engine nacelles.
-  const nacGeo = track(new THREE.CylinderGeometry(2.4, 2.4, 7, 10));
-  [-1, 1].forEach((s) => {
-    const n = new THREE.Mesh(nacGeo, mat);
-    n.position.set(-10, -9, s * 11);
-    n.rotation.z = Math.PI / 2;
-    g.add(n);
-  });
-
-  g.position.set(0, shipY, SHIP_Z);
-  return g;
-}
-
-export default {
-  id: 'airship',
+function makeWorld(id, palette) {
+ return {
+  id,
 
   camera: { fov: FOV, position: [0, EYE_Y, 0], pitch: PITCH },
 
   grade: null, // filled in by build(), because it depends on ctx.reduced
 
   build(ctx) {
+    P = palette;
     disposables = [];
-    shipMats = [];
     group = new THREE.Group();
 
     const aspect0 = ctx.viewport.width / Math.max(1, ctx.viewport.height);
@@ -283,17 +393,31 @@ export default {
 
     group.add(buildSky());
     group.add(buildLayers());
+    group.add(buildNear());
+    layoutCity();
 
-    ship = buildShip();
+    renderer = ctx.renderer;
+    ship = buildSkyship({ track, sunVec, colors: P.ship });
+    ship.scale.setScalar(SHIP_SCALE);
+    ship.position.set(0, shipY, SHIP_Z);
     group.add(ship);
+
+    farShip = buildSkyship({ track, sunVec, colors: P.ship, hazeAmt: FAR.haze, detail: false });
+    farShip.rotation.y = Math.PI; // heading the other way
+    farShip.position.set(0, farY, FAR.z);
+    group.add(farShip);
+    layoutShip(aspect0);
 
     // Grain and flicker are motion; freeze both when motion is unwelcome.
     gradeUniforms = {
-      uSepia: { value: 0.95 },
+      uSepia: { value: P.grade.sepia },
+      uKeep: { value: P.grade.keep },
       uGrain: { value: ctx.reduced ? 0.022 : 0.065 },
-      uVignette: { value: 0.42 },
+      uVignette: { value: P.grade.vignette },
       uFlicker: { value: ctx.reduced ? 0.0 : 0.035 },
-      uLift: { value: 0.09 },
+      uLift: { value: P.grade.lift },
+      uWeave: { value: ctx.reduced ? 0.0 : 0.7 },
+      uDust: { value: ctx.reduced ? 0.0 : 0.6 },
     };
     // Hard vertical building edges need multisampling, and the scene renders
     // into the grade pass's target, so the canvas's own antialias flag is no
@@ -311,19 +435,32 @@ export default {
     const aspect = w / Math.max(1, h);
     updateSun(aspect);
     layoutShip(aspect);
+    layoutCity();
   },
 
   update(t) {
     if (skyMat) skyMat.uniforms.uTime.value = t;
     for (const m of skylineMats) m.uniforms.uTime.value = t;
+    if (nearMat) nearMat.uniforms.uTime.value = t;
+
+    // Smoke puffs are sized in pixels, so they need the render height.
+    const halfH = renderer ? renderer.getDrawingBufferSize(bufSize).y / 2 : 400;
 
     if (ship) {
+      ship.userData.update(t, halfH);
       // Loop across the frame, with a gentle buoyant bob and a slight roll.
       const phase = ((t / SHIP_PERIOD + SHIP_PHASE) % 1 + 1) % 1;
       ship.position.x = -shipSpan + phase * shipSpan * 2;
       ship.position.y = shipY + Math.sin(t * 0.21) * 3.2;
       ship.rotation.z = Math.sin(t * 0.17) * 0.012;
       ship.rotation.y = Math.sin(t * 0.11) * 0.02;
+    }
+
+    if (farShip) {
+      farShip.userData.update(t, halfH);
+      const phase = ((t / FAR.period + FAR.phase) % 1 + 1) % 1;
+      farShip.position.x = farSpan - phase * farSpan * 2;
+      farShip.position.y = farY + Math.sin(t * 0.13 + 2.0) * 4.0;
     }
   },
 
@@ -337,12 +474,18 @@ export default {
     }
     disposables = [];
     skylineMats = [];
-    shipMats = [];
     skyMat = null;
+    nearMat = null;
     sunVec = null;
     ship = null;
+    farShip = null;
+    renderer = null;
     group = null;
     gradeUniforms = null;
     this.grade = null;
   },
-};
+ };
+}
+
+export default makeWorld('airship', DAY);
+export const dusk = makeWorld('airship-dusk', DUSK);

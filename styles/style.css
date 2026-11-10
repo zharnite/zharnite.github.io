@@ -26,6 +26,7 @@
 :root {
   --ink-none: #222;
   --ink-airship: #2b241b;
+  --ink-airship-dusk: #f3e2c4;
   --ink-sea: #f2ede6;
   --ink-card: #f7e9bd;
   --ink-card-mono: #ece9e2;
@@ -41,6 +42,15 @@
     #f6ead1 66%,
     #9b8763 69%,
     #554936 100%
+  );
+  --wp-airship-dusk: linear-gradient(
+    to bottom,
+    #1d1a28 0%,
+    #43343f 40%,
+    #c98f62 64%,
+    #d99a66 67%,
+    #52423f 69%,
+    #191415 100%
   );
   --wp-sea: linear-gradient(
     to bottom,
@@ -99,6 +109,23 @@
     rgba(243, 230, 203, 0) 72%
   );
   --fallback: var(--wp-airship);
+}
+
+/* The same city after the sun has gone down: light ink, like the sea. */
+[data-theme='airship-dusk'] {
+  --ink-dim: rgba(243, 226, 196, 0.6);
+  --panel-bg: rgba(26, 21, 26, 0.96);
+  --panel-edge: rgba(243, 226, 196, 0.2);
+  --ink: var(--ink-airship-dusk);
+  --accent: #e0a56e;
+  --ink-foot: rgba(243, 226, 196, 0.72);
+  --accent-foot: #e8c98f;
+  --scrim: radial-gradient(
+    ellipse 80% 58% at 50% 40%,
+    rgba(20, 16, 22, 0.5),
+    rgba(20, 16, 22, 0) 74%
+  );
+  --fallback: var(--wp-airship-dusk);
 }
 
 [data-theme='sea-sunset'] {
@@ -422,6 +449,10 @@ h1 {
   background-image: var(--wp-airship);
   color: var(--ink-airship);
 }
+.nav-opts-preview .nav-opt[data-value='airship-dusk'] {
+  background-image: var(--wp-airship-dusk);
+  color: var(--ink-airship-dusk);
+}
 .nav-opts-preview .nav-opt[data-value='sea-sunset'] {
   background-image: var(--wp-sea);
   color: var(--ink-sea);
@@ -440,6 +471,7 @@ h1 {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
+.nav-opts-preview .nav-opt[data-value='airship-dusk'],
 .nav-opts-preview .nav-opt[data-value='sea-sunset'],
 .nav-opts-preview .nav-opt[data-value='card'],
 .nav-opts-preview .nav-opt[data-value='card-mono'] {
