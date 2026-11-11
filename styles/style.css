@@ -16,7 +16,7 @@
 
    Each world owns its ink, accent, contrast scrim and the CSS gradient that
    stands in before WebGL boots and forever if WebGL is unavailable. The two
-   worlds have opposite polarity on purpose: the airship is dark ink on a
+   worlds have opposite polarity on purpose: the vintage city is dark ink on a
    bright hazy sky, the sea is light ink on dusk.
    --------------------------------------------------------------------------- */
 
@@ -25,8 +25,8 @@
    WebGL, rather than a second hand-tuned approximation. */
 :root {
   --ink-none: #222;
-  --ink-airship: #2b241b;
-  --ink-airship-dusk: #f3e2c4;
+  --ink-vintage: #2b241b;
+  --ink-steampunk: #f3e2c4;
   --ink-sea: #f2ede6;
   --ink-card: #f7e9bd;
   --ink-card-mono: #ece9e2;
@@ -35,7 +35,7 @@
      `background-image` on the preview rows, where a bare colour is invalid
      and silently leaves the row transparent. */
   --wp-none: linear-gradient(#fff, #fff);
-  --wp-airship: linear-gradient(
+  --wp-vintage: linear-gradient(
     to bottom,
     #9c8762 0%,
     #c4ad86 40%,
@@ -43,7 +43,7 @@
     #9b8763 69%,
     #554936 100%
   );
-  --wp-airship-dusk: linear-gradient(
+  --wp-steampunk: linear-gradient(
     to bottom,
     #1d1a28 0%,
     #43343f 40%,
@@ -95,11 +95,11 @@
   color: #000;
 }
 
-[data-theme='airship'] {
+[data-theme='vintage'] {
   --ink-dim: rgba(43, 36, 27, 0.5);
   --panel-bg: rgba(246, 234, 209, 0.97);
   --panel-edge: rgba(43, 36, 27, 0.2);
-  --ink: var(--ink-airship);
+  --ink: var(--ink-vintage);
   --accent: #8a6b3f;
   --ink-foot: rgba(248, 240, 226, 0.78);
   --accent-foot: #e8c98f;
@@ -108,15 +108,15 @@
     rgba(243, 230, 203, 0.55),
     rgba(243, 230, 203, 0) 72%
   );
-  --fallback: var(--wp-airship);
+  --fallback: var(--wp-vintage);
 }
 
-/* The same city after the sun has gone down: light ink, like the sea. */
-[data-theme='airship-dusk'] {
+/* The city at dusk: light ink, like the sea. */
+[data-theme='steampunk'] {
   --ink-dim: rgba(243, 226, 196, 0.6);
   --panel-bg: rgba(26, 21, 26, 0.96);
   --panel-edge: rgba(243, 226, 196, 0.2);
-  --ink: var(--ink-airship-dusk);
+  --ink: var(--ink-steampunk);
   --accent: #e0a56e;
   --ink-foot: rgba(243, 226, 196, 0.72);
   --accent-foot: #e8c98f;
@@ -125,7 +125,7 @@
     rgba(20, 16, 22, 0.5),
     rgba(20, 16, 22, 0) 74%
   );
-  --fallback: var(--wp-airship-dusk);
+  --fallback: var(--wp-steampunk);
 }
 
 [data-theme='sea-sunset'] {
@@ -145,7 +145,7 @@
 }
 
 /* Title cards. The glow is dark enough everywhere that one light ink serves
-   the whole page, so unlike the airship these need no separate footer zone. */
+   the whole page, so unlike the vintage city these need no separate footer zone. */
 
 [data-theme='card'] {
   --ink-dim: rgba(247, 233, 189, 0.6);
@@ -366,6 +366,15 @@ h1 {
   color: var(--ink-dim);
 }
 
+/* Skeleton turns every focused button #333. Picking a wallpaper sends focus
+   back to the trigger, which then sat dark grey on the dark wallpapers until
+   something else took focus. A focused control keeps its resting colour;
+   keyboard focus still gets the brighter one through :focus-visible. */
+.nav-trigger:focus,
+.nav-opt:focus {
+  color: var(--ink-dim);
+}
+
 .nav-trigger:hover,
 .nav-trigger:focus-visible,
 .nav-set.is-open .nav-trigger {
@@ -445,13 +454,13 @@ h1 {
   background-image: var(--wp-none);
   color: var(--ink-none);
 }
-.nav-opts-preview .nav-opt[data-value='airship'] {
-  background-image: var(--wp-airship);
-  color: var(--ink-airship);
+.nav-opts-preview .nav-opt[data-value='vintage'] {
+  background-image: var(--wp-vintage);
+  color: var(--ink-vintage);
 }
-.nav-opts-preview .nav-opt[data-value='airship-dusk'] {
-  background-image: var(--wp-airship-dusk);
-  color: var(--ink-airship-dusk);
+.nav-opts-preview .nav-opt[data-value='steampunk'] {
+  background-image: var(--wp-steampunk);
+  color: var(--ink-steampunk);
 }
 .nav-opts-preview .nav-opt[data-value='sea-sunset'] {
   background-image: var(--wp-sea);
@@ -467,11 +476,11 @@ h1 {
 }
 
 .nav-opts-preview .nav-opt[data-value='none'],
-.nav-opts-preview .nav-opt[data-value='airship'] {
+.nav-opts-preview .nav-opt[data-value='vintage'] {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
-.nav-opts-preview .nav-opt[data-value='airship-dusk'],
+.nav-opts-preview .nav-opt[data-value='steampunk'],
 .nav-opts-preview .nav-opt[data-value='sea-sunset'],
 .nav-opts-preview .nav-opt[data-value='card'],
 .nav-opts-preview .nav-opt[data-value='card-mono'] {

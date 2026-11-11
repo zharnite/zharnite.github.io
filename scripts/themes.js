@@ -4,7 +4,7 @@
 //
 // load() resolves to the world object itself, not the module, so one file can
 // supply more than one world (the two title cards share title-card.js, and
-// the airship's two times of day share airship.js).
+// Steampunk and Vintage are one city in two lights, both in steampunk.js).
 // A null load() means no 3D at all: the plain page.
 
 export const THEMES = [
@@ -14,14 +14,14 @@ export const THEMES = [
     load: null,
   },
   {
-    id: 'airship',
-    label: 'Airship',
-    load: () => import('./worlds/airship.js').then((m) => m.default),
+    id: 'steampunk',
+    label: 'Steampunk',
+    load: () => import('./worlds/steampunk.js').then((m) => m.default),
   },
   {
-    id: 'airship-dusk',
-    label: 'Airship Dusk',
-    load: () => import('./worlds/airship.js').then((m) => m.dusk),
+    id: 'vintage',
+    label: 'Vintage',
+    load: () => import('./worlds/steampunk.js').then((m) => m.vintage),
   },
   {
     id: 'sea-sunset',

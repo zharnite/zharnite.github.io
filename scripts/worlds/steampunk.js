@@ -24,18 +24,10 @@ const SHIP = {
   envelope: { shade: 0x6e6150, lit: 0xb9a888, rim: 0xd6c5a0 },
   hull: { shade: 0x3f3528, lit: 0x6f5e46, rim: 0xa08a66 },
   haze: 0xf0e3c6,
-  smoke: 0x4a4033,
+  smoke: 0x8f8268,
+  smokeOpacity: 0.4,
 };
 const SHIP_SCALE = 1.2;
-
-// A second ship, a long way off, going the other way. It rides low, just
-// over the far rooftops, and slips behind the near towers as it goes.
-const FAR = {
-  z: -2100,
-  period: 230, // seconds for a crossing
-  phase: 0.3,
-  haze: 0.5,
-};
 
 // Horizon sits at ~68% of viewport height. At fov 45 that is a pitch of
 // atan(0.36 * tan(22.5deg)) ~= 8.5 degrees, looking up.
@@ -64,7 +56,7 @@ const LAYERS = [
   { z: -380, color: 0x473d2d, ang: 0.200, angVar: 0.110, count: 26, speed: 0.00320, soft: 0.0008, opacity: 1.0, windows: 0.028, seed: 19.4, mist: 0.12 },
 ];
 
-// The near city: one wall of tenement towers, close enough to see into. It
+// The near city: one wall of brick towers, close enough to see into. It
 // scrolls at the same ground speed as the rows behind it (their uv speeds all
 // work out to about four units a second), so the parallax stays honest.
 const NEAR = {
@@ -99,7 +91,9 @@ const DAY = {
   ship: SHIP,
   near: NEAR,
   litShare: 0.42,
-  grade: { sepia: 0.95, keep: 0.0, vignette: 0.42, lift: 0.09 },
+  // Vintage is a 1930s film of the place: toned, flickering, the frame
+  // drifting in the gate, dust and the odd hair on the print.
+  grade: { sepia: 0.95, keep: 0.0, vignette: 0.42, lift: 0.09, grain: 0.065, flicker: 0.035, weave: 0.7, dust: 0.6 },
 };
 
 const DUSK = {
@@ -114,30 +108,39 @@ const DUSK = {
   sunElev: 4,
   rows: [
     { color: 0x8f7466, windows: 0.0, mist: 0.46 },
-    { color: 0x6f5a54, windows: 0.05, mist: 0.46 },
-    { color: 0x52423f, windows: 0.1, mist: 0.42 },
-    { color: 0x372c2c, windows: 0.16, mist: 0.34 },
-    { color: 0x231c1d, windows: 0.2, mist: 0.1 },
+    { color: 0x6f5a54, windows: 0.0, mist: 0.46 },
+    { color: 0x52423f, windows: 0.22, mist: 0.42 },
+    { color: 0x372c2c, windows: 0.34, mist: 0.34 },
+    { color: 0x231c1d, windows: 0.42, mist: 0.1 },
   ],
   glint: 0xffc878,
+  // A dark ship on a dark sky disappears, so this one is lit more than the
+  // scene strictly allows, the way a painter would: one warm key light from
+  // low on the sunset side, so the belly and the near flank glow and the top
+  // stays dark against the sky, a thin rim on that same side only, and lamps
+  // along the hull.
   ship: {
-    envelope: { shade: 0x2c2529, lit: 0x8a6650, rim: 0xe0a56e },
-    hull: { shade: 0x1d181a, lit: 0x5a4436, rim: 0xc98f5e },
+    envelope: { shade: 0x2e262b, lit: 0x5e4a46, rim: 0xffd9a0, key: 0xd08a52 },
+    hull: { shade: 0x1f191a, lit: 0x45342c, rim: 0xf0a868, key: 0x8e5a34 },
     haze: 0x8a6a5c,
-    smoke: 0x1a1618,
+    smoke: 0xe9dac6,
+    smokeOpacity: 0.5,
+    rimStrength: 0.5,
+    rimPower: 3.0,
+    keyDir: [0.35, -0.85, 0.4],
+    keyAmt: 0.8,
+    lamp: 0xffd28a,
+    brass: 0xd9a25c,
   },
   near: { ...NEAR, wall: 0x191415, metal: 0x4d3e38, glow: 0xffd28a, dark: 0x0c0a0b, haze: 0.03 },
   litShare: 0.6,
   // Hand-tinted rather than toned: over half of the scene's own colour is let
   // through, so the plum sky and the amber lamps survive the print.
-  grade: { sepia: 0.9, keep: 0.62, vignette: 0.6, lift: 0.06 },
+  grade: { sepia: 0.9, keep: 0.62, vignette: 0.6, lift: 0.06, grain: 0.03, flicker: 0, weave: 0, dust: 0 },
 };
 
 let P = DAY;
 
-let farShip = null;
-let farY = 140;
-let farSpan = 1500;
 let shipY = 88;
 let shipSpan = 700;
 
@@ -172,20 +175,6 @@ function layoutShip(aspect) {
   shipSpan = Math.max(250, halfVisible * 1.6);
 
   if (ship) ship.position.y = shipY;
-
-  // The far ship keeps to the strip between the page's content and the
-  // horizon. Where the content runs down to the horizon there is no strip,
-  // and it stays home.
-  let contentBottom = 0.55;
-  if (row) {
-    const r = row.getBoundingClientRect();
-    if (r.height > 0) contentBottom = r.bottom / vh;
-  }
-  const farF = Math.max(0.635, contentBottom + 0.035);
-  const farD = Math.abs(FAR.z);
-  farY = EYE_Y + farD * Math.tan(PITCH + Math.atan((0.5 - farF) * 2 * tanV));
-  farSpan = farD * aspect * tanV + 120;
-  if (farShip) farShip.visible = farF < 0.662;
 }
 
 // World height at distance d of the point a fraction f down the viewport.
@@ -215,9 +204,9 @@ function layoutCity() {
     if (r.height > 0) footerTop = r.top / vh;
   }
 
-  // Eight units of headroom for water tanks and aerials.
-  const top = worldYAt(Math.max(contentBottom + 0.04, 0.5), d) - 8;
-  nearMat.uniforms.uTop.value = THREE.MathUtils.clamp(top, 24, 96);
+  // The shader fits each tower's roof under this, spire and all.
+  const top = worldYAt(Math.max(contentBottom + 0.035, 0.5), d);
+  nearMat.uniforms.uTop.value = THREE.MathUtils.clamp(top, 36, 110);
   nearMat.uniforms.uGloomY.value = worldYAt(Math.min(footerTop, 0.97) - 0.03, d);
 }
 
@@ -233,7 +222,7 @@ function buildNear() {
         uTime: { value: 0 },
         uBaseY: { value: baseY },
         uScroll: { value: NEAR.scroll },
-        uSeed: { value: 3.1 },
+        uSeed: { value: 20.2 },
         uTop: { value: 70 },
         uGloomY: { value: 12 },
         uLife: { value: 1 },
@@ -402,22 +391,18 @@ function makeWorld(id, palette) {
     ship.position.set(0, shipY, SHIP_Z);
     group.add(ship);
 
-    farShip = buildSkyship({ track, sunVec, colors: P.ship, hazeAmt: FAR.haze, detail: false });
-    farShip.rotation.y = Math.PI; // heading the other way
-    farShip.position.set(0, farY, FAR.z);
-    group.add(farShip);
-    layoutShip(aspect0);
-
-    // Grain and flicker are motion; freeze both when motion is unwelcome.
+    // Grain, flicker, weave and dust are all motion; freeze or drop them when
+    // motion is unwelcome.
+    const G = P.grade;
     gradeUniforms = {
-      uSepia: { value: P.grade.sepia },
-      uKeep: { value: P.grade.keep },
-      uGrain: { value: ctx.reduced ? 0.022 : 0.065 },
-      uVignette: { value: P.grade.vignette },
-      uFlicker: { value: ctx.reduced ? 0.0 : 0.035 },
-      uLift: { value: P.grade.lift },
-      uWeave: { value: ctx.reduced ? 0.0 : 0.7 },
-      uDust: { value: ctx.reduced ? 0.0 : 0.6 },
+      uSepia: { value: G.sepia },
+      uKeep: { value: G.keep },
+      uGrain: { value: ctx.reduced ? G.grain * 0.35 : G.grain },
+      uVignette: { value: G.vignette },
+      uFlicker: { value: ctx.reduced ? 0.0 : G.flicker },
+      uLift: { value: G.lift },
+      uWeave: { value: ctx.reduced ? 0.0 : G.weave },
+      uDust: { value: ctx.reduced ? 0.0 : G.dust },
     };
     // Hard vertical building edges need multisampling, and the scene renders
     // into the grade pass's target, so the canvas's own antialias flag is no
@@ -455,13 +440,6 @@ function makeWorld(id, palette) {
       ship.rotation.z = Math.sin(t * 0.17) * 0.012;
       ship.rotation.y = Math.sin(t * 0.11) * 0.02;
     }
-
-    if (farShip) {
-      farShip.userData.update(t, halfH);
-      const phase = ((t / FAR.period + FAR.phase) % 1 + 1) % 1;
-      farShip.position.x = farSpan - phase * farSpan * 2;
-      farShip.position.y = farY + Math.sin(t * 0.13 + 2.0) * 4.0;
-    }
   },
 
   dispose() {
@@ -478,7 +456,6 @@ function makeWorld(id, palette) {
     nearMat = null;
     sunVec = null;
     ship = null;
-    farShip = null;
     renderer = null;
     group = null;
     gradeUniforms = null;
@@ -487,5 +464,5 @@ function makeWorld(id, palette) {
  };
 }
 
-export default makeWorld('airship', DAY);
-export const dusk = makeWorld('airship-dusk', DUSK);
+export default makeWorld('steampunk', DUSK);
+export const vintage = makeWorld('vintage', DAY);
