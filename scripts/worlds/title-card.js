@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import * as cardShader from '../shaders/card.js';
 import * as gradeCard from '../shaders/grade-card.js';
 
-// Two worlds come out of this file, so it is a factory rather than a single
-// exported object: each card gets its own closure state and they can never
-// tread on each other.
+// A factory rather than a single exported object, so a second card in another
+// treatment is one more call with its own closure state. Only the black and
+// white card is made at the moment.
 //
 // There is no 3D subject here on purpose. The page is already composed like a
 // title card -- a heading sitting at 35vh over an empty field -- so this world
@@ -109,29 +109,10 @@ function createCard(opts) {
   };
 }
 
-// Technicolor: saturated dye-transfer greens and teals, with halation and a
-// registration error that only shows at the edges.
-export const color = createCard({
-  id: 'card',
-  mono: false,
-  center: 0x4a8d5c,
-  mid: 0x145049,
-  edge: 0x06242c,
-  texture: 0.05,
-  weave: 1.1,
-  fringe: 2.2,
-  halation: 0.55,
-  grain: 0.055,
-  vignette: 0.5,
-  flicker: 0.03,
-  lift: 0.07,
-  dust: 0.05,
-});
-
 // Black and white: no colour records, so no fringing at all. Grain, weave and
-// flicker carry it instead, and they run harder.
+// flicker carry it instead.
 export const mono = createCard({
-  id: 'card-mono',
+  id: 'old-tv',
   mono: true,
   center: 0x6b6b6b,
   mid: 0x353535,

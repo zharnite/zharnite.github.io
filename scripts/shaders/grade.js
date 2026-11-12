@@ -18,6 +18,7 @@ uniform float uFlicker;
 uniform float uLift;
 uniform float uWeave;   // gate drift, in pixels
 uniform float uDust;
+uniform float uVibrance; // 0 leaves the picture alone; above that, richer colour and more contrast
 
 varying vec2 vUv;
 
@@ -37,6 +38,10 @@ void main(){
   float l = dot(src, vec3(0.299, 0.587, 0.114));
   vec3 warm = vec3(l) * vec3(1.10, 0.96, 0.78);
   vec3 col = mix(mix(vec3(l), warm, uSepia), src, uKeep);
+
+  // For a scene that should be more vivid than it was drawn, not less.
+  col = clamp(mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, 1.0 + uVibrance), 0.0, 1.0);
+  col = mix(col, col * col * (3.0 - 2.0 * col), uVibrance * 0.8);
 
   // Period film never reached true black, and never quite reached white.
   col = col * (1.0 - uLift) + uLift * 0.62;

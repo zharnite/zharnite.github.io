@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+/* Limelight is only used by the Old TV wallpaper. The browser fetches a font
+   file the first time something is set in it, so it costs nothing elsewhere. */
+/* The web fonts are linked from index.html, where they can load without
+   holding up the page. An @import here would have to finish first. */
 
 :root {
   /* Colors */
@@ -15,9 +18,9 @@
    Per-world tokens.
 
    Each world owns its ink, accent, contrast scrim and the CSS gradient that
-   stands in before WebGL boots and forever if WebGL is unavailable. The two
-   worlds have opposite polarity on purpose: the vintage city is dark ink on a
-   bright hazy sky, the sea is light ink on dusk.
+   stands in before WebGL boots and forever if WebGL is unavailable. Every
+   wallpaper is light ink on a dark scene; only the plain page is dark on
+   light.
    --------------------------------------------------------------------------- */
 
 /* Wallpaper gradients, defined once. --fallback below points at these, and
@@ -25,23 +28,23 @@
    WebGL, rather than a second hand-tuned approximation. */
 :root {
   --ink-none: #222;
-  --ink-vintage: #2b241b;
+  --ink-station: #fdf4ff;
   --ink-steampunk: #f3e2c4;
-  --ink-sea: #f2ede6;
-  --ink-card: #f7e9bd;
-  --ink-card-mono: #ece9e2;
+  --ink-old-tv: #ece9e2;
 
   /* A gradient, not a plain colour: these tokens are used as
      `background-image` on the preview rows, where a bare colour is invalid
      and silently leaves the row transparent. */
   --wp-none: linear-gradient(#fff, #fff);
-  --wp-vintage: linear-gradient(
+  --wp-station: linear-gradient(
     to bottom,
-    #9c8762 0%,
-    #c4ad86 40%,
-    #f6ead1 66%,
-    #9b8763 69%,
-    #554936 100%
+    #2030a8 0%,
+    #5560d8 30%,
+    #c690e0 52%,
+    #f4a3d0 59%,
+    #8fb6ec 62%,
+    #555fa0 65%,
+    #262e60 100%
   );
   --wp-steampunk: linear-gradient(
     to bottom,
@@ -52,23 +55,42 @@
     #52423f 69%,
     #191415 100%
   );
-  --wp-sea: linear-gradient(
+  /* The same two places by day and by night. */
+  --wp-station-day: linear-gradient(
     to bottom,
-    #16233f 0%,
-    #39406e 28%,
-    #8a5a86 45%,
-    #e2785f 56%,
-    #ffb98a 61%,
-    #1a2b45 62%,
-    #0d1a30 100%
+    #3f86e4 0%,
+    #6fb2f2 34%,
+    #c4e4fb 60%,
+    #8fb08a 63%,
+    #bdbab2 68%,
+    #9f9c95 100%
   );
-  --wp-card: radial-gradient(
-    ellipse 90% 80% at 40% 44%,
-    #4a8d5c 0%,
-    #145049 42%,
-    #06242c 100%
+  --wp-station-night: linear-gradient(
+    to bottom,
+    #050818 0%,
+    #0d1440 34%,
+    #232a72 60%,
+    #1c2358 63%,
+    #161b4c 68%,
+    #0c1030 100%
   );
-  --wp-card-mono: radial-gradient(
+  --wp-steampunk-day: linear-gradient(
+    to bottom,
+    #9c8762 0%,
+    #c4ad86 40%,
+    #f6ead1 66%,
+    #9b8763 69%,
+    #554936 100%
+  );
+  --wp-steampunk-night: linear-gradient(
+    to bottom,
+    #060814 0%,
+    #141b36 40%,
+    #3c4c7e 66%,
+    #202741 69%,
+    #0c0f1b 100%
+  );
+  --wp-old-tv: radial-gradient(
     ellipse 90% 80% at 40% 44%,
     #6b6b6b 0%,
     #353535 42%,
@@ -95,23 +117,54 @@
   color: #000;
 }
 
-[data-theme='vintage'] {
-  --ink-dim: rgba(43, 36, 27, 0.5);
-  --panel-bg: rgba(246, 234, 209, 0.97);
-  --panel-edge: rgba(43, 36, 27, 0.2);
-  --ink: var(--ink-vintage);
-  --accent: #8a6b3f;
-  --ink-foot: rgba(248, 240, 226, 0.78);
-  --accent-foot: #e8c98f;
+/* The station at dusk. The sky behind the lettering is bright in places, so
+   the scrim is doing real work here. */
+[data-theme='station'] {
+  --ink-dim: rgba(253, 244, 255, 0.66);
+  --panel-bg: rgba(22, 25, 66, 0.95);
+  --panel-edge: rgba(253, 244, 255, 0.22);
+  --ink: var(--ink-station);
+  --accent: #ffc0d2;
+  --ink-foot: rgba(253, 244, 255, 0.92);
+  --accent-foot: #ffd08a;
   --scrim: radial-gradient(
-    ellipse 80% 58% at 50% 40%,
-    rgba(243, 230, 203, 0.55),
-    rgba(243, 230, 203, 0) 72%
+    ellipse 80% 58% at 42% 40%,
+    rgba(20, 22, 72, 0.5),
+    rgba(20, 22, 72, 0) 74%
   );
-  --fallback: var(--wp-vintage);
+  --fallback: var(--wp-station);
 }
 
-/* The city at dusk: light ink, like the sea. */
+/* The station by day: a bright sky, so the ink goes dark, and the scrim
+   lightens what is behind the lettering where at dusk it darkened it. */
+[data-theme='station'][data-time='day'] {
+  --ink: #142048;
+  --ink-dim: rgba(20, 32, 72, 0.7);
+  --panel-bg: rgba(238, 245, 255, 0.97);
+  --panel-edge: rgba(20, 32, 72, 0.2);
+  --accent: #1f58c8;
+  --ink-foot: rgba(20, 32, 72, 0.82);
+  --accent-foot: #1f58c8;
+  --scrim: radial-gradient(
+    ellipse 80% 58% at 42% 40%,
+    rgba(232, 244, 255, 0.5),
+    rgba(232, 244, 255, 0) 74%
+  );
+  --fallback: var(--wp-station-day);
+}
+
+/* By night it is darker everywhere, and the same light ink serves. */
+[data-theme='station'][data-time='night'] {
+  --panel-bg: rgba(8, 11, 40, 0.96);
+  --scrim: radial-gradient(
+    ellipse 80% 58% at 42% 40%,
+    rgba(5, 8, 30, 0.45),
+    rgba(5, 8, 30, 0) 74%
+  );
+  --fallback: var(--wp-station-night);
+}
+
+/* The city at dusk: light ink. */
 [data-theme='steampunk'] {
   --ink-dim: rgba(243, 226, 196, 0.6);
   --panel-bg: rgba(26, 21, 26, 0.96);
@@ -128,46 +181,42 @@
   --fallback: var(--wp-steampunk);
 }
 
-[data-theme='sea-sunset'] {
-  --ink-dim: rgba(242, 237, 230, 0.6);
-  --panel-bg: rgba(10, 18, 36, 0.95);
-  --panel-edge: rgba(242, 237, 230, 0.2);
-  --ink: var(--ink-sea);
-  --accent: #ffc27a;
-  --ink-foot: rgba(242, 237, 230, 0.6);
-  --accent-foot: #ffc27a;
+/* The city in the afternoon: dark ink on a bright sky. The footer sits on the
+   dark near rooftops, so it keeps a light ink of its own. */
+[data-theme='steampunk'][data-time='day'] {
+  --ink: #2b241b;
+  --ink-dim: rgba(43, 36, 27, 0.6);
+  --panel-bg: rgba(246, 234, 209, 0.97);
+  --panel-edge: rgba(43, 36, 27, 0.2);
+  --accent: #8a6b3f;
+  --ink-foot: rgba(248, 240, 226, 0.78);
+  --accent-foot: #e8c98f;
   --scrim: radial-gradient(
     ellipse 80% 58% at 50% 40%,
-    rgba(8, 14, 28, 0.58),
-    rgba(8, 14, 28, 0) 74%
+    rgba(243, 230, 203, 0.55),
+    rgba(243, 230, 203, 0) 72%
   );
-  --fallback: var(--wp-sea);
+  --fallback: var(--wp-steampunk-day);
 }
 
-/* Title cards. The glow is dark enough everywhere that one light ink serves
-   the whole page, so unlike the vintage city these need no separate footer zone. */
-
-[data-theme='card'] {
-  --ink-dim: rgba(247, 233, 189, 0.6);
-  --panel-bg: rgba(6, 34, 42, 0.95);
-  --panel-edge: rgba(247, 233, 189, 0.2);
-  --ink: var(--ink-card);
-  --accent: #f0c84e;
-  --ink-foot: rgba(247, 233, 189, 0.72);
-  --accent-foot: #f0c84e;
+/* The city at night: the same light ink as dusk, a colder panel. */
+[data-theme='steampunk'][data-time='night'] {
+  --panel-bg: rgba(10, 12, 24, 0.96);
   --scrim: radial-gradient(
-    ellipse 78% 56% at 40% 44%,
-    rgba(4, 20, 24, 0.34),
-    rgba(4, 20, 24, 0) 74%
+    ellipse 80% 58% at 50% 40%,
+    rgba(6, 8, 20, 0.45),
+    rgba(6, 8, 20, 0) 74%
   );
-  --fallback: var(--wp-card);
+  --fallback: var(--wp-steampunk-night);
 }
 
-[data-theme='card-mono'] {
+/* The title card. The glow is dark enough everywhere that one light ink serves
+   the whole page, so it needs no separate footer zone. */
+[data-theme='old-tv'] {
   --ink-dim: rgba(236, 233, 226, 0.6);
   --panel-bg: rgba(18, 18, 18, 0.95);
   --panel-edge: rgba(236, 233, 226, 0.2);
-  --ink: var(--ink-card-mono);
+  --ink: var(--ink-old-tv);
   --accent: #cfc8b6;
   --ink-foot: rgba(236, 233, 226, 0.7);
   --accent-foot: #e6e0d0;
@@ -176,7 +225,7 @@
     rgba(0, 0, 0, 0.36),
     rgba(0, 0, 0, 0) 74%
   );
-  --fallback: var(--wp-card-mono);
+  --fallback: var(--wp-old-tv);
 }
 
 * {
@@ -312,6 +361,48 @@ h1 {
   color: var(--accent-foot);
 }
 
+/* On a narrow window the station's footer sits on sunlit paving, which is
+   nearly as light as the ink. A soft dark edge keeps it readable there and
+   is invisible where the paving is in shade. */
+[data-theme='station'] #main-footer p {
+  text-shadow:
+    0 0 0.3rem rgba(20, 22, 72, 0.95),
+    0 0 1rem rgba(20, 22, 72, 0.75);
+}
+
+/* By day the footer is dark ink on pale concrete and needs no edge. */
+[data-theme='station'][data-time='day'] #main-footer p {
+  text-shadow: none;
+}
+
+/* --- Old TV: title-card lettering -----------------------------------------
+
+   Same layout as every other wallpaper; only the face changes. Limelight is a
+   Broadway-style Art Deco face, the lettering of a black and white title
+   card. It has one weight, so everything is set at 400: anything bolder would
+   be smeared on by the browser. */
+
+[data-theme='old-tv'] #content-row,
+[data-theme='old-tv'] #main-footer {
+  font-family: 'Limelight', 'Broadway', serif;
+}
+
+[data-theme='old-tv'] h1,
+[data-theme='old-tv'] #name {
+  font-weight: 400;
+}
+
+/* A little halation: bright lettering bled into the stock around it. */
+[data-theme='old-tv'] h1 {
+  text-shadow: 0 0 1.4rem rgba(255, 255, 255, 0.22);
+}
+
+[data-theme='old-tv'] #link-btn {
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+
 /* --- top nav -------------------------------------------------------------- */
 
 #topbar {
@@ -398,6 +489,10 @@ h1 {
   transform: rotate(180deg);
 }
 
+.nav-set[hidden] {
+  display: none;
+}
+
 .nav-opts {
   display: none;
   position: absolute;
@@ -454,36 +549,26 @@ h1 {
   background-image: var(--wp-none);
   color: var(--ink-none);
 }
-.nav-opts-preview .nav-opt[data-value='vintage'] {
-  background-image: var(--wp-vintage);
-  color: var(--ink-vintage);
+.nav-opts-preview .nav-opt[data-value='station'] {
+  background-image: var(--wp-station);
+  color: var(--ink-station);
 }
 .nav-opts-preview .nav-opt[data-value='steampunk'] {
   background-image: var(--wp-steampunk);
   color: var(--ink-steampunk);
 }
-.nav-opts-preview .nav-opt[data-value='sea-sunset'] {
-  background-image: var(--wp-sea);
-  color: var(--ink-sea);
-}
-.nav-opts-preview .nav-opt[data-value='card'] {
-  background-image: var(--wp-card);
-  color: var(--ink-card);
-}
-.nav-opts-preview .nav-opt[data-value='card-mono'] {
-  background-image: var(--wp-card-mono);
-  color: var(--ink-card-mono);
+.nav-opts-preview .nav-opt[data-value='old-tv'] {
+  background-image: var(--wp-old-tv);
+  color: var(--ink-old-tv);
 }
 
-.nav-opts-preview .nav-opt[data-value='none'],
-.nav-opts-preview .nav-opt[data-value='vintage'] {
+.nav-opts-preview .nav-opt[data-value='none'] {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
 .nav-opts-preview .nav-opt[data-value='steampunk'],
-.nav-opts-preview .nav-opt[data-value='sea-sunset'],
-.nav-opts-preview .nav-opt[data-value='card'],
-.nav-opts-preview .nav-opt[data-value='card-mono'] {
+.nav-opts-preview .nav-opt[data-value='station'],
+.nav-opts-preview .nav-opt[data-value='old-tv'] {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
@@ -537,7 +622,7 @@ h1 {
 }
 
 /* --- collapsed nav --------------------------------------------------------- */
-/* Two triggers need roughly 370px. Skeleton's .container is 80% of the
+/* The two controls need roughly 370px. Skeleton's .container is 80% of the
    viewport above 550px, so that fits comfortably down to ~520px; the
    hamburger takes over at 600 to leave room for font differences. */
 

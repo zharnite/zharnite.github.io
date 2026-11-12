@@ -23,19 +23,49 @@
        fallback gradient are never briefly from the wrong world. -->
   <script>
     (function () {
-      var ids = ['none', 'steampunk', 'vintage', 'sea-sunset', 'card', 'card-mono'];
+      var ids = ['none', 'steampunk', 'station', 'old-tv'];
       var id = 'none';
       try {
         var v = localStorage.getItem('zharnite.world');
         if (ids.indexOf(v) >= 0) id = v;
       } catch (e) { /* blocked storage: keep the default */ }
+
+      // A visitor who has asked their browser to save data, or is on a very
+      // slow connection, gets the plain page even if they chose a wallpaper
+      // last time. The menu is still there if they want one anyway.
+      var c = navigator.connection;
+      if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''))) {
+        id = 'none';
+        document.documentElement.setAttribute('data-lite', '');
+      }
       document.documentElement.setAttribute('data-theme', id);
+
+      // Wallpapers that have a time of day: day uses dark ink, so that has to
+      // be known before first paint too.
+      if (id === 'steampunk' || id === 'station') {
+        var time = 'dusk';
+        try {
+          var t = localStorage.getItem('zharnite.time');
+          if (t === 'day' || t === 'night') time = t;
+        } catch (e) { /* keep dusk */ }
+        document.documentElement.setAttribute('data-time', time);
+      }
     })();
   </script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles/skeleton.css" />
   <link rel="stylesheet" href="styles/style.css" />
+
+  <!-- Web fonts, loaded without holding up the page: the stylesheet is
+       fetched as if for print, which does not block, and switched on when it
+       arrives. Until then the text shows in the system's monospace face. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&amp;family=Share+Tech+Mono&amp;display=swap" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&amp;family=Share+Tech+Mono&amp;display=swap" />
+  </noscript>
 
   <!-- Three.js, pinned. The internal ./three.core.min.js import resolves
        relatively against the same CDN directory, so one entry is enough. -->
@@ -47,8 +77,16 @@
     }
   </script>
 
-  <!-- Font Awesome -->
-  <script src="https://kit.fontawesome.com/3d468919d3.js" crossorigin="anonymous"></script>
+  <!-- The page's own scripts, fetched together and not one after another.
+       These come after the import map: a browser stops accepting an import
+       map once it has started loading modules. -->
+  <link rel="modulepreload" href="scripts/main.js" />
+  <link rel="modulepreload" href="scripts/themes.js" />
+  <link rel="modulepreload" href="scripts/menu.js" />
+
+  <!-- Font Awesome, for the two icons on the button. Deferred, so the page
+       is drawn without waiting for it. -->
+  <script defer src="https://kit.fontawesome.com/3d468919d3.js" crossorigin="anonymous"></script>
 </head>
 
 <body>

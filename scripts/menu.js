@@ -1,4 +1,4 @@
-// The top nav: two dropdowns, Wallpaper and Jukebox, sitting in the content
+// The top nav: two dropdowns, Wallpaper and Time, sitting in the content
 // column. Below the breakpoint the whole bar collapses behind a hamburger
 // and the dropdowns become an accordion inside it.
 //
@@ -9,9 +9,8 @@
 // mutually exclusive choices, and toggle buttons would both misreport that
 // to a screen reader and leave the group un-navigable from the keyboard.
 //
-// There is no separate mute: the jukebox's Off is the audio control, and
-// it silences the wallpaper stings too. Two controls for one thing invited
-// the state where music is off but the page still makes noise.
+// Time is the time of day, for the wallpapers that are one place in several
+// lights. It is hidden on a wallpaper that has only the one.
 
 function h(tag, props, children) {
   const el = document.createElement(tag);
@@ -156,12 +155,12 @@ export function buildMenu(opts) {
   const {
     navMount,
     themes,
-    tracks,
     getTheme,
-    getTrack,
     onTheme,
-    onTrack,
-    soundAvailable,
+    times,
+    getTime,
+    onTime,
+    hasTime,
   } = opts;
 
   const nav = h('nav', { id: 'nav' });
@@ -187,13 +186,10 @@ export function buildMenu(opts) {
   allSets.push(wallpaper);
   sets.appendChild(wallpaper.el);
 
-  let jukebox = null;
-  if (soundAvailable) {
-    jukebox = buildSet('Jukebox', tracks, getTrack, onTrack, closeOthers, false);
-    jukebox.el.classList.add('nav-set-jukebox');
-    allSets.push(jukebox);
-    sets.appendChild(jukebox.el);
-  }
+  const time = buildSet('Time', times, getTime, onTime, closeOthers, false);
+  allSets.push(time);
+  sets.appendChild(time.el);
+  time.el.hidden = !hasTime();
 
   nav.appendChild(sets);
   nav.appendChild(toggle);
@@ -254,7 +250,10 @@ export function buildMenu(opts) {
     // trigger values stay true.
     refresh() {
       wallpaper.paint();
-      if (jukebox) jukebox.paint();
+      time.paint();
+      const show = hasTime();
+      if (!show) time.close();
+      time.el.hidden = !show;
     },
   };
 }

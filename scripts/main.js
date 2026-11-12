@@ -1,8 +1,8 @@
-import { THEMES, DEFAULT_THEME, getTheme } from './themes.js';
+import { THEMES, DEFAULT_THEME, TIMES, DEFAULT_TIME, getTheme } from './themes.js';
 import { buildMenu } from './menu.js';
-import * as audio from './audio.js';
 
 const THEME_KEY = 'zharnite.world';
+const TIME_KEY = 'zharnite.time';
 
 const canvas = document.getElementById('bg-canvas');
 const navContainer = document.querySelector('#topbar .container');
@@ -10,6 +10,7 @@ const navContainer = document.querySelector('#topbar .container');
 let engine = null;
 let enginePromise = null;
 let currentId = null;
+let currentTime = DEFAULT_TIME;
 let token = 0;
 let menu = null;
 const loaded = new Map();
@@ -28,6 +29,23 @@ function readTheme() {
 function writeTheme(id) {
   try {
     localStorage.setItem(THEME_KEY, id);
+  } catch (e) {
+    /* blocked storage is not fatal */
+  }
+}
+
+function readTime() {
+  try {
+    const v = localStorage.getItem(TIME_KEY);
+    return TIMES.some((t) => t.id === v) ? v : DEFAULT_TIME;
+  } catch (e) {
+    return DEFAULT_TIME;
+  }
+}
+
+function writeTime(id) {
+  try {
+    localStorage.setItem(TIME_KEY, id);
   } catch (e) {
     /* blocked storage is not fatal */
   }
@@ -59,15 +77,22 @@ function getEngine() {
 
 // --- activation -----------------------------------------------------------
 
-async function activate(id) {
+// `remember` is false for the one case where the page picks for the visitor
+// (the plain page on a slow connection), so their own choice stays stored.
+async function activate(id, remember = true) {
   const theme = getTheme(id);
   const my = ++token;
 
   // Colours flip first, so the page is never showing one world's ink over
   // another world's background.
-  document.documentElement.setAttribute('data-theme', theme.id);
+  // The time of day is part of that: day wants dark ink where dusk and night
+  // want light. A wallpaper with no times carries no data-time at all.
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme.id);
+  if (theme.timed) root.setAttribute('data-time', currentTime);
+  else root.removeAttribute('data-time');
   currentId = theme.id;
-  writeTheme(theme.id);
+  if (remember) writeTheme(theme.id);
   if (menu) menu.refresh();
 
   // No wallpaper: tear any world down and let the CSS background show.
@@ -81,10 +106,11 @@ async function activate(id) {
   if (!eng || my !== token) return; // no WebGL, or a newer pick won
 
   try {
-    let mod = loaded.get(theme.id);
+    const key = theme.timed ? theme.id + ':' + currentTime : theme.id;
+    let mod = loaded.get(key);
     if (!mod) {
-      mod = await theme.load();
-      loaded.set(theme.id, mod);
+      mod = await theme.load(currentTime);
+      loaded.set(key, mod);
     }
     if (my !== token) return;
     eng.setWorld(mod);
@@ -94,6 +120,13 @@ async function activate(id) {
   }
 }
 
+function setTime(id) {
+  if (!TIMES.some((t) => t.id === id)) return null;
+  currentTime = id;
+  writeTime(id);
+  return activate(currentId);
+}
+
 // --- boot -----------------------------------------------------------------
 
 function boot() {
@@ -101,21 +134,35 @@ function boot() {
     menu = buildMenu({
       navMount: navContainer,
       themes: THEMES.map((t) => ({ id: t.id, label: t.label })),
-      tracks: audio.TRACKS.map((t) => ({ id: t.id, label: t.label })),
       getTheme: () => currentId,
-      getTrack: () => audio.getTrack(),
       onTheme: (id) => activate(id),
-      onTrack: (id) => audio.setTrack(id),
-      soundAvailable: audio.available(),
+      times: TIMES,
+      getTime: () => currentTime,
+      onTime: (id) => setTime(id),
+      hasTime: () => !!getTheme(currentId).timed,
     });
   }
 
-  activate(readTheme());
+  // The site had sound for a while; forget what it stored.
+  try {
+    localStorage.removeItem('zharnite.sound');
+    localStorage.removeItem('zharnite.track');
+  } catch (e) {
+    /* nothing to forget */
+  }
+
+  currentTime = readTime();
+  // index.html marks the page `data-lite` when the visitor is saving data or
+  // on a very slow connection: start plain, whatever was chosen before.
+  const lite = document.documentElement.hasAttribute('data-lite');
+  if (lite) activate(DEFAULT_THEME, false);
+  else activate(readTheme());
 
   // Exposed for the verification pass.
   window.__bg = {
     stats: () => (engine ? engine.stats() : null),
     activate: (id) => activate(id),
+    setTime: (id) => setTime(id),
     scene: () => (engine ? engine.scene : null),
     engineLoaded: () => !!engine,
   };

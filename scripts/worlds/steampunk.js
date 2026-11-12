@@ -75,11 +75,13 @@ const SHIP_Z = -900;
 const SHIP_PERIOD = 75; // seconds for a full crossing
 const SHIP_PHASE = 0.42; // start already in frame, left of centre
 
-// --- the two times of day ------------------------------------------------------
+// --- the three times of day ----------------------------------------------------
 //
 // Everything above is the hazy afternoon. Dusk is the same city, ship and
 // camera with the light changed: the sun down on the horizon, the sky gone
 // plum, the rows of buildings dark against it, and most of the lamps on.
+// Night goes further: a blue-black sky with the moon up where the sun was,
+// the city a set of dark shapes, and nearly every window lit.
 // `rows` runs far to near and overrides each layer's colour, glints and mist.
 
 const DAY = {
@@ -91,9 +93,11 @@ const DAY = {
   ship: SHIP,
   near: NEAR,
   litShare: 0.42,
-  // Vintage is a 1930s film of the place: toned, flickering, the frame
-  // drifting in the gate, dust and the odd hair on the print.
-  grade: { sepia: 0.95, keep: 0.0, vignette: 0.42, lift: 0.09, grain: 0.065, flicker: 0.035, weave: 0.7, dust: 0.6 },
+  // Toned like an old print, but with about half of the scene's own colour
+  // let through, as dusk and night are, so the three read as one place. (As
+  // the Vintage wallpaper this was a full sepia film, with flicker, gate
+  // weave and dust.)
+  grade: { sepia: 0.92, keep: 0.5, vignette: 0.44, lift: 0.08, grain: 0.035, flicker: 0, weave: 0, dust: 0 },
 };
 
 const DUSK = {
@@ -139,7 +143,47 @@ const DUSK = {
   grade: { sepia: 0.9, keep: 0.62, vignette: 0.6, lift: 0.06, grain: 0.03, flicker: 0, weave: 0, dust: 0 },
 };
 
-let P = DAY;
+const NIGHT = {
+  sky: {
+    haze: 0x2c3558,
+    zenith: 0x060814,
+    upper: 0x141b36,
+    horizon: 0x3c4c7e,
+    sunGlow: 0x7f93cc, // the moon's
+  },
+  cloud: 0.3,
+  sunElev: 30,
+  rows: [
+    { color: 0x3b4668, windows: 0.2, mist: 0.5 },
+    { color: 0x2d3654, windows: 0.34, mist: 0.48 },
+    { color: 0x202741, windows: 0.5, mist: 0.42 },
+    { color: 0x161b2e, windows: 0.62, mist: 0.32 },
+    { color: 0x0c0f1b, windows: 0.72, mist: 0.1 },
+  ],
+  glint: 0xffc878,
+  // Moonlight from above on the envelope, a cold thin rim, and the lamps
+  // along the hull doing most of the work of showing where the ship is.
+  ship: {
+    envelope: { shade: 0x1a2036, lit: 0x3d4a70, rim: 0xc4d2ff, key: 0x5d6fa8 },
+    hull: { shade: 0x10131f, lit: 0x2a3048, rim: 0x9fb0e8, key: 0x3d4870 },
+    haze: 0x2c3558,
+    smoke: 0xaab4d6,
+    smokeOpacity: 0.4,
+    rimStrength: 0.5,
+    rimPower: 3.0,
+    keyDir: [0.3, 0.8, 0.5],
+    keyAmt: 0.7,
+    lamp: 0xffd28a,
+    brass: 0xc99a5a,
+  },
+  near: { ...NEAR, wall: 0x0e1019, metal: 0x30364a, glow: 0xffd28a, dark: 0x05060b, haze: 0.03 },
+  litShare: 0.8,
+  // Mostly the scene's own colour: toning a night blue toward sepia turns it
+  // to mud, and the amber windows need the blue beside them.
+  grade: { sepia: 0.9, keep: 0.88, vignette: 0.64, lift: 0.035, grain: 0.03, flicker: 0, weave: 0, dust: 0 },
+};
+
+let P = DUSK;
 
 let shipY = 88;
 let shipSpan = 700;
@@ -464,5 +508,12 @@ function makeWorld(id, palette) {
  };
 }
 
-export default makeWorld('steampunk', DUSK);
-export const vintage = makeWorld('vintage', DAY);
+// One world for each time of day. They share this file's state, which is
+// safe because the engine tears one down before it builds the next.
+export const worlds = {
+  day: makeWorld('steampunk', DAY),
+  dusk: makeWorld('steampunk', DUSK),
+  night: makeWorld('steampunk', NIGHT),
+};
+
+export default worlds.dusk;
