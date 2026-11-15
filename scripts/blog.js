@@ -19,24 +19,6 @@
   none.hidden = true;
   years[years.length - 1].insertAdjacentElement('afterend', none);
 
-  // More: the tags past the first few are folded away behind it.
-  var more = row ? row.querySelector('.tag-more') : null;
-  var moreLabel = more ? more.textContent : '';
-
-  function setMore(open) {
-    if (!more) return;
-    row.classList.toggle('is-open', open);
-    more.setAttribute('aria-expanded', String(open));
-    more.textContent = open ? 'Fewer' : moreLabel;
-  }
-
-  if (more) {
-    more.hidden = false;
-    more.addEventListener('click', function () {
-      setMore(!row.classList.contains('is-open'));
-    });
-  }
-
   function apply(tag) {
     var shown = 0;
     items.forEach(function (li) {
@@ -51,13 +33,8 @@
     none.hidden = shown > 0;
 
     rowLinks.forEach(function (a) {
-      if (a.getAttribute('data-tag') === tag) {
-        a.setAttribute('aria-current', 'true');
-        // Never filter by a tag that is folded away out of sight.
-        if (a.hasAttribute('data-extra')) setMore(true);
-      } else {
-        a.removeAttribute('aria-current');
-      }
+      if (a.getAttribute('data-tag') === tag) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
     });
   }
 

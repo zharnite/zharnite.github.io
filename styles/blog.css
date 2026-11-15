@@ -47,7 +47,6 @@ body.blog {
 .tag,
 .blog time,
 .post-meta,
-.tag-more,
 .post-end span,
 .post-end-all,
 .recipe-label,
@@ -203,41 +202,6 @@ body.blog {
   border-color: var(--ink);
 }
 
-/* Only the most-used tags show until More is pressed. Without JS there is
-   no More, and default.html's <noscript> shows them all. */
-.tag-row:not(.is-open) a[data-extra] {
-  display: none;
-}
-
-/* More is a control, not a tag: same shape, dashed edge. Skeleton styles a
-   bare button heavily, so most of this puts it back. */
-.tag-more {
-  height: auto;
-  margin: 0;
-  padding: 0.3rem 1.2rem;
-  font-size: 1.3rem;
-  font-weight: 400;
-  line-height: 1.6;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-soft);
-  background: none;
-  border: 1px dashed var(--ink-dim);
-  border-radius: 10rem;
-  cursor: pointer;
-}
-
-.tag-more:hover,
-.tag-more:focus,
-.tag-more:focus-visible {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.tag-more[hidden] {
-  display: none;
-}
-
 /* --- the listing ---------------------------------------------------------- */
 
 .post-year {
@@ -362,6 +326,20 @@ body.blog {
   padding-left: 1.6rem;
   border-left: 0.3rem solid var(--panel-edge);
   color: var(--ink-soft);
+}
+
+/* A sound effect: <p class="sfx">click click</p>. Set like a stage
+   direction, between asterisks, in the mono face. */
+.sfx {
+  font-family: 'Share Tech Mono', monospace;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.sfx::before,
+.sfx::after {
+  content: '*';
 }
 
 .post-body pre {

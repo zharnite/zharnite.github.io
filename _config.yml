@@ -17,6 +17,18 @@ defaults:
     values:
       layout: post
 
+# The blog's tags, in the order the filter on /blog/ shows them. A tag only
+# appears there once a post uses it. A tag that is not in this list still
+# shows on its post but gets no place in the filter.
+blog_tags:
+  - food
+  - recipe
+  - life
+  - random
+  - 3d
+  - game dev
+  - tech
+
 exclude:
   - README.md
   - .claude

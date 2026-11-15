@@ -5,28 +5,22 @@ title: Blog
 <h1>Blog</h1>
 
 {% comment %}
-  The tag filter: every tag in use, most-used first, then by name.
-
-  site.tags is keyed by tag name and cannot be sorted as it is, so each tag
-  is written out as "sort-key:name" and those strings are sorted. The key is
-  100000 minus the number of posts, which puts the biggest count first.
-
-  The first `tag_limit` tags always show. The rest are marked data-extra and
-  folded behind the More button by scripts/blog.js.
+  The tag filter. The tags and their order come from `blog_tags` in
+  _config.yml, and one is only shown once a post uses it, so the row grows
+  as the blog does. With no tagged posts at all there is no row.
 {% endcomment %}
-{% assign tag_limit = 6 %}
-{% capture tag_keys %}{% for tag in site.tags %}{{ 100000 | minus: tag[1].size }}:{{ tag[0] }}|{% endfor %}{% endcapture %}
-{% assign tag_keys = tag_keys | split: '|' | sort %}
-{% if tag_keys.size > 0 %}
+{% capture chips %}
+  {% for name in site.blog_tags %}
+  {% if site.tags[name] %}
+  <a href="{{ '/blog/' | relative_url }}?tag={{ name | slugify }}" data-tag="{{ name | slugify }}">{{ name | escape }}</a>
+  {% endif %}
+  {% endfor %}
+{% endcapture %}
+{% assign chips = chips | strip %}
+{% if chips != '' %}
 <p class="tag-row">
   <a href="{{ '/blog/' | relative_url }}" data-tag="">All</a>
-  {% for key in tag_keys %}
-  {% assign name = key | split: ':' | last %}
-  <a href="{{ '/blog/' | relative_url }}?tag={{ name | slugify }}" data-tag="{{ name | slugify }}"{% if forloop.index > tag_limit %} data-extra{% endif %}>{{ name | escape }}</a>
-  {% endfor %}
-  {% if tag_keys.size > tag_limit %}
-  <button type="button" class="tag-more" aria-expanded="false" hidden>+{{ tag_keys.size | minus: tag_limit }} more</button>
-  {% endif %}
+  {{ chips }}
 </p>
 {% endif %}
 
