@@ -5,25 +5,17 @@
 title: zharnite
 description: Hi, I'm zharnite! A software engineer and 3D hobbyist.
 
-# A post's address is its category and its file name without the date:
-# _posts/recipes/2026-11-15-fried-rice.md  ->  /recipes/fried-rice/
-permalink: /:categories/:title/
+# A post's address is its file name without the date:
+# _posts/2026-11-15-fried-rice.md  ->  /blog/fried-rice/
+permalink: /blog/:title/
 
-# The folder a post sits in decides its category, so a post only has to
-# state its title. Anything directly in _posts/, or in a folder with no
-# entry here, is filed under misc.
+# Every post uses the post layout, so a post only has to state its title.
 defaults:
   - scope:
       path: ""
       type: posts
     values:
       layout: post
-      category: misc
-  - scope:
-      path: _posts/recipes
-      type: posts
-    values:
-      category: recipes
 
 exclude:
   - README.md

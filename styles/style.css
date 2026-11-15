@@ -327,9 +327,23 @@ h1 {
   );
 }
 
-/* --- hobbies button ------------------------------------------------------- */
+/* --- tagline --------------------------------------------------------------
 
-#link-btn {
+   The rest of the sentence the heading starts. Smaller than the name and in
+   --ink-dim, which each wallpaper sets for its own sky. The size follows the
+   window on a phone so the line stays a single line. */
+
+#tagline {
+  margin: 0 0 2rem;
+  font-size: clamp(1.6rem, 5.4vw, 2.2rem);
+  line-height: 1.4;
+  color: var(--ink-dim);
+}
+
+/* --- hobbies and blog buttons --------------------------------------------- */
+
+#link-btn,
+#blog-btn {
   /* The tagline used to hold this clear of the underline. */
   margin-top: 1.2rem;
   color: var(--ink);
@@ -338,7 +352,9 @@ h1 {
 }
 
 #link-btn:hover,
-#link-btn:focus {
+#link-btn:focus,
+#blog-btn:hover,
+#blog-btn:focus {
   color: var(--accent);
   border-color: var(--accent);
 }
@@ -397,7 +413,8 @@ h1 {
   text-shadow: 0 0 1.4rem rgba(255, 255, 255, 0.22);
 }
 
-[data-theme='old-tv'] #link-btn {
+[data-theme='old-tv'] #link-btn,
+[data-theme='old-tv'] #blog-btn {
   font-family: inherit;
   font-size: 1.3rem;
   font-weight: 400;
@@ -405,8 +422,7 @@ h1 {
 
 /* --- top bar --------------------------------------------------------------
 
-   Places to go on the left, the Appearance menu on the right. The links are
-   in index.html; the menu is added by scripts/menu.js. */
+   The Wallpaper menu, at the right. It is added by scripts/menu.js. */
 
 #topbar {
   position: fixed;
@@ -424,12 +440,6 @@ h1 {
   align-items: center;
   padding-top: 1.2rem;
   padding-bottom: 1.2rem;
-}
-
-#site-links {
-  display: flex;
-  align-items: center;
-  gap: 2.4rem;
 }
 
 #nav {
@@ -452,10 +462,8 @@ h1 {
   text-transform: uppercase;
 }
 
-/* A link and the menu button are the same lettering. Neither has padding on
-   its outer side: the link's text starts on the content column's left edge
-   and the chevron ends on its right. */
-.nav-link,
+/* No padding on the right, so the chevron ends on the content column's
+   right edge. */
 .nav-trigger {
   display: inline-flex;
   align-items: center;
@@ -465,15 +473,8 @@ h1 {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--ink-dim);
-}
-
-.nav-link {
-  padding: 0.6rem 0.2rem 0.6rem 0;
-}
-
-.nav-trigger {
   padding: 0.6rem 0 0.6rem 0.2rem;
+  color: var(--ink-dim);
 }
 
 /* Skeleton turns every focused button #333. Closing the panel sends focus
@@ -485,8 +486,6 @@ h1 {
   color: var(--ink-dim);
 }
 
-.nav-link:hover,
-.nav-link:focus-visible,
 .nav-trigger:hover,
 .nav-trigger:focus-visible,
 #nav.is-open .nav-trigger {

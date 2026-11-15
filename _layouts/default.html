@@ -19,6 +19,10 @@
   <link rel="stylesheet" href="{{ '/styles/skeleton.css' | relative_url }}" />
   <link rel="stylesheet" href="{{ '/styles/style.css' | relative_url }}" />
   <link rel="stylesheet" href="{{ '/styles/blog.css' | relative_url }}" />
+  <!-- The tag filter's More button needs JS; without it, show every tag. -->
+  <noscript>
+    <style>.tag-row a[data-extra] { display: block !important; }</style>
+  </noscript>
 
   <!-- Same non-blocking font load as the home page. Inter is the reading
        face, Space Grotesk the headings, and Share Tech Mono stays for the
@@ -37,7 +41,8 @@
       <div class="blog-container">
         <a class="blog-home" href="{{ '/' | relative_url }}">zharnite</a>
         <nav class="blog-nav" aria-label="Blog">
-          <a href="{{ '/blog/' | relative_url }}">Blog</a>
+          {% comment %} Marked on the listing itself and on every post in it. {% endcomment %}
+          <a href="{{ '/blog/' | relative_url }}"{% if page.url == '/blog/' %} aria-current="page"{% elsif page.layout == 'post' %} aria-current="true"{% endif %}>Blog</a>
         </nav>
       </div>
     </header>

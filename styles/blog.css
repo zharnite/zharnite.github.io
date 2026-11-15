@@ -1,8 +1,14 @@
-/* The blog: listing pages and posts. Loaded after style.css, on pages that
+/* The blog: the listing and posts. Loaded after style.css, on pages that
    carry class="blog" on <body>. These pages set no data-theme, so they get
    the plain page's tokens: dark ink on white.
 
    Skeleton sets 1rem to 10px. */
+
+.blog {
+  /* Secondary text that still has to be read: a description, a note.
+     --ink-dim is for labels and is too faint for a sentence. */
+  --ink-soft: #5f5f5f;
+}
 
 .blog-container {
   width: 100%;
@@ -15,7 +21,14 @@
 
    Share Tech Mono is tiring over a long text, so the blog reads in Inter with
    Space Grotesk headings. The mono face stays where it marks the site: the
-   name, the small labels, the footer, and code. */
+   name, the small labels, the footer, and code.
+
+   The small mono lettering does three different jobs, and each looks its own
+   way so one is not taken for another:
+
+     navigation   capitals, spaced out; the current page is underlined
+     a filter     an outlined chip; the chosen one is filled
+     information  dates and tags in plain lower case; a tag starts with #  */
 
 body.blog {
   font-family: 'Inter', system-ui, sans-serif;
@@ -30,10 +43,15 @@ body.blog {
 
 .blog-home,
 .blog-nav,
+.tag-row,
+.tag,
+.blog time,
 .post-meta,
-.cat-row,
-.post-cat,
-.post-list time,
+.tag-more,
+.post-end span,
+.post-end-all,
+.recipe-label,
+.recipe-facts,
 .blog code,
 .blog pre,
 .blog #main-footer {
@@ -82,28 +100,26 @@ body.blog {
   color: #000;
 }
 
-.blog-nav a,
-.post-meta,
-.post-meta a,
-.cat-row a,
-.post-list time,
-.post-cat {
+/* Navigation. */
+.blog-nav a {
   font-size: 1.2rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-dim);
   text-decoration: none;
+  color: var(--ink-dim);
 }
 
 .blog-nav a:hover,
-.blog-nav a:focus-visible,
-.post-meta a:hover,
-.post-meta a:focus-visible,
-.cat-row a:hover,
-.cat-row a:focus-visible,
-.post-cat:hover,
-.post-cat:focus-visible {
+.blog-nav a:focus-visible {
   color: var(--ink);
+}
+
+/* Where you are: on the listing, and on any post in it. */
+.blog-nav a[aria-current] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 0.2rem;
+  text-underline-offset: 0.6rem;
 }
 
 /* --- headings -------------------------------------------------------------
@@ -133,17 +149,112 @@ body.blog {
   letter-spacing: 0;
 }
 
-.post-meta {
-  margin-bottom: 0.8rem;
+/* --- information: dates and tags ------------------------------------------ */
+
+.blog time,
+.tag {
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
 }
 
-/* --- listings ------------------------------------------------------------- */
+.tag {
+  text-decoration: none;
+}
 
-.cat-row {
+.tag::before {
+  content: '#';
+}
+
+.tag:hover,
+.tag:focus-visible {
+  color: var(--ink);
+}
+
+/* --- the filter ----------------------------------------------------------- */
+
+.tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 2rem;
-  margin-bottom: 2.4rem;
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+}
+
+.tag-row a {
+  padding: 0.3rem 1.2rem;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  text-decoration: none;
+  color: var(--ink-soft);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10rem;
+}
+
+.tag-row a:hover,
+.tag-row a:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* The one being filtered by. */
+.tag-row a[aria-current='true'] {
+  color: #fff;
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* Only the most-used tags show until More is pressed. Without JS there is
+   no More, and default.html's <noscript> shows them all. */
+.tag-row:not(.is-open) a[data-extra] {
+  display: none;
+}
+
+/* More is a control, not a tag: same shape, dashed edge. Skeleton styles a
+   bare button heavily, so most of this puts it back. */
+.tag-more {
+  height: auto;
+  margin: 0;
+  padding: 0.3rem 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px dashed var(--ink-dim);
+  border-radius: 10rem;
+  cursor: pointer;
+}
+
+.tag-more:hover,
+.tag-more:focus,
+.tag-more:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.tag-more[hidden] {
+  display: none;
+}
+
+/* --- the listing ---------------------------------------------------------- */
+
+.post-year {
+  margin-top: 3.2rem;
+}
+
+.post-year[hidden] {
+  display: none;
+}
+
+/* A year is in the heading face and full ink, so it reads as the title of
+   its group and not as one more of the grey dates beneath it. */
+.blog .post-year h2 {
+  margin: 0 0 1rem;
+  font-size: 2.2rem;
+  line-height: 1.2;
+  color: var(--ink);
 }
 
 .post-list {
@@ -152,23 +263,24 @@ body.blog {
 }
 
 .post-list li {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 6.4rem 1fr;
+  gap: 0 1.6rem;
   align-items: baseline;
-  gap: 0.2rem 1.6rem;
   margin: 0;
-  padding: 1.2rem 0;
+  padding: 1.4rem 0;
   border-top: 1px solid var(--panel-edge);
 }
 
-.post-list time {
-  flex: none;
-  width: 10rem;
+/* An item is a grid, which would otherwise override [hidden]. */
+.post-list li[hidden] {
+  display: none;
 }
 
 .post-link {
-  flex: 1 1 24rem;
-  font-size: 1.7rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--ink);
   text-decoration: none;
 }
@@ -180,26 +292,50 @@ body.blog {
   text-underline-offset: 0.3rem;
 }
 
-.post-list .post-empty {
-  color: var(--ink-dim);
+.post-desc {
+  margin: 0.3rem 0 0;
+  font-size: 1.5rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.post-empty {
+  margin-top: 3.2rem;
+  color: var(--ink-soft);
 }
 
 /* --- a post --------------------------------------------------------------- */
 
-.post-body {
-  font-size: 1.7rem;
-  line-height: 1.7;
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.2rem;
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
 }
 
+.post-jump {
+  margin: -1.2rem 0 2.4rem;
+  font-size: 1.5rem;
+}
+
+.post-jump a,
 .post-body a {
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 0.3rem;
 }
 
+.post-jump a:hover,
+.post-jump a:focus-visible,
 .post-body a:hover,
 .post-body a:focus-visible {
   color: var(--color-5);
+}
+
+.post-body {
+  font-size: 1.7rem;
+  line-height: 1.7;
 }
 
 /* Skeleton puts list markers inside the text block, which misaligns any
@@ -225,7 +361,7 @@ body.blog {
   margin: 2.4rem 0;
   padding-left: 1.6rem;
   border-left: 0.3rem solid var(--panel-edge);
-  color: var(--ink-dim);
+  color: var(--ink-soft);
 }
 
 .post-body pre {
@@ -244,6 +380,131 @@ body.blog {
   overflow-x: auto;
 }
 
+/* --- a recipe -------------------------------------------------------------
+
+   The card at the foot of a post that has a `recipe:` block. The post above
+   it is the story; this is the part to cook from. */
+
+.recipe-card {
+  margin-top: 5rem;
+  padding: 2.4rem 2.4rem 1rem;
+  border: 1px solid var(--panel-edge);
+  border-top: 0.4rem solid var(--ink);
+  font-size: 1.7rem;
+  line-height: 1.6;
+  /* Jumping to it leaves a little air above. */
+  scroll-margin-top: 2rem;
+}
+
+.recipe-label {
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.blog .recipe-card h2 {
+  margin-top: 0;
+}
+
+.blog .recipe-card h3 {
+  margin-top: 2.4rem;
+}
+
+.recipe-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2.4rem;
+  margin-bottom: 0;
+  font-size: 1.4rem;
+  color: var(--ink-dim);
+}
+
+.recipe-facts b {
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.recipe-card ul,
+.recipe-card ol {
+  padding-left: 2.4rem;
+  list-style-position: outside;
+}
+
+.recipe-card li {
+  margin-bottom: 0.6rem;
+}
+
+.recipe-card ol li {
+  margin-bottom: 1.2rem;
+}
+
+.recipe-notes {
+  color: var(--ink-soft);
+}
+
+/* --- the end of a post ----------------------------------------------------
+
+   The posts either side of this one, and the way back to the list. */
+
+.post-end {
+  margin-top: 5rem;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--panel-edge);
+}
+
+.post-end-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.4rem;
+  margin-bottom: 2.4rem;
+}
+
+.post-end-pair a {
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* Newer keeps to the right even when there is no older post beside it. */
+.post-end-pair a[rel='next'] {
+  grid-column: 2;
+  text-align: right;
+}
+
+.post-end-pair a:hover,
+.post-end-pair a:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
+}
+
+.post-end span {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.post-end-all {
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink-dim);
+}
+
+.post-end-all:hover,
+.post-end-all:focus-visible {
+  color: var(--ink);
+}
+
 .blog #main-footer {
   margin-top: 6rem;
 }
@@ -253,7 +514,7 @@ body.blog {
     font-size: 2.8rem;
   }
 
-  .post-list time {
-    width: 100%;
+  .recipe-card {
+    padding: 2rem 1.6rem 0.6rem;
   }
 }

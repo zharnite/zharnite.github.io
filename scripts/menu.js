@@ -1,9 +1,8 @@
-// The Appearance menu, at the right of the top bar: one button that opens a
-// panel holding the Wallpaper choices and, under them, the Time of day.
+// The Wallpaper menu, at the right of the top bar: one button that opens a
+// panel holding the wallpapers and, under them, the Time of day.
 //
-// The site's own links sit at the left of the bar and are written into
-// index.html. This menu is built in JS instead, so a visitor with JS off
-// sees the links and the plain page rather than a dead control.
+// Built in JS rather than written into index.html, so a visitor with JS off
+// sees the plain page rather than a dead control.
 //
 // Each option list is a real radiogroup with arrow-key navigation. These are
 // mutually exclusive choices, and toggle buttons would both misreport that
@@ -27,17 +26,22 @@ function chevron() {
   );
 }
 
-// One labelled radiogroup inside the panel.
+// One radiogroup inside the panel. The wallpapers come straight under the
+// button that names them, so that group has no heading of its own; it is
+// still named for a screen reader.
 function buildGroup(label, items, getSelected, onPick, preview) {
   const id = 'nav-group-' + label.toLowerCase();
   const el = h('div', { className: 'nav-group' });
-  const heading = h('div', { className: 'nav-group-label', id, textContent: label });
+  const heading = preview
+    ? null
+    : h('div', { className: 'nav-group-label', id, textContent: label });
 
   const group = h('div', {
     className: preview ? 'nav-opts nav-opts-preview' : 'nav-opts',
   });
   group.setAttribute('role', 'radiogroup');
-  group.setAttribute('aria-labelledby', id);
+  if (heading) group.setAttribute('aria-labelledby', id);
+  else group.setAttribute('aria-label', label);
 
   const buttons = [];
 
@@ -89,7 +93,7 @@ function buildGroup(label, items, getSelected, onPick, preview) {
     group.appendChild(b);
   });
 
-  el.appendChild(heading);
+  if (heading) el.appendChild(heading);
   el.appendChild(group);
   paint();
 
@@ -118,7 +122,7 @@ export function buildMenu(opts) {
   const nav = h('div', { id: 'nav' });
 
   const trigger = h('button', { type: 'button', className: 'nav-trigger' }, [
-    h('span', { className: 'nav-label', textContent: 'Appearance' }),
+    h('span', { className: 'nav-label', textContent: 'Wallpaper' }),
   ]);
   trigger.insertAdjacentHTML('beforeend', chevron());
   trigger.setAttribute('aria-expanded', 'false');

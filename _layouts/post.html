@@ -1,17 +1,44 @@
 ---
 layout: default
 ---
-{% assign cat = page.categories | first %}
 <article class="post">
   <header class="post-head">
     <p class="post-meta">
       <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %b %Y" }}</time>
-      {% if cat %}&middot; <a href="{{ '/' | append: cat | append: '/' | relative_url }}">{{ cat | escape }}</a>{% endif %}
+      {% for tag in page.tags %}
+      <a class="tag" href="{{ '/blog/' | relative_url }}?tag={{ tag | slugify }}">{{ tag | escape }}</a>
+      {% endfor %}
     </p>
     <h1>{{ page.title | escape }}</h1>
+    {% if page.recipe %}
+    <p class="post-jump"><a href="#recipe">Jump to recipe &darr;</a></p>
+    {% endif %}
   </header>
 
   <div class="post-body">
     {{ content }}
   </div>
+
+  {% comment %} A post with a `recipe:` block gets the card at its foot. {% endcomment %}
+  {% if page.recipe %}
+  {% include recipe-card.html recipe=page.recipe %}
+  {% endif %}
 </article>
+
+{% comment %}
+  Somewhere to go next. `previous` is the post before this one in time and
+  `next` the one after, so older sits on the left and newer on the right.
+{% endcomment %}
+<nav class="post-end" aria-label="More posts">
+  {% if page.previous or page.next %}
+  <div class="post-end-pair">
+    {% if page.previous %}
+    <a rel="prev" href="{{ page.previous.url | relative_url }}"><span>Older</span>{{ page.previous.title | escape }}</a>
+    {% endif %}
+    {% if page.next %}
+    <a rel="next" href="{{ page.next.url | relative_url }}"><span>Newer</span>{{ page.next.title | escape }}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  <a class="post-end-all" href="{{ '/blog/' | relative_url }}">&larr; All posts</a>
+</nav>

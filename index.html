@@ -94,14 +94,10 @@
   <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
   <!-- Top bar. Fixed, so it never shifts the hero down and the worlds keep
-       the composition they were tuned against. The links are here; the
-       Appearance menu is added to their right by scripts/menu.js. -->
+       the composition they were tuned against. It holds the Wallpaper menu,
+       which scripts/menu.js adds at its right. -->
   <header id="topbar">
-    <div class="container">
-      <nav id="site-links" aria-label="Site">
-        <a class="nav-link" href="blog/">Blog</a>
-      </nav>
-    </div>
+    <div class="container"></div>
   </header>
 
   <div id="main-wrapper">
@@ -110,9 +106,11 @@
       <div class="container">
         <div class="row" id="content-row">
           <h1>Hi, I'm <span id="name">zharnite</span></h1>
+          <p id="tagline">and I'm making something...</p>
           <a id="link-btn" href="https://linktr.ee/zharnite" class="button" target="_blank">Hobbies <i
               class="fa fa-link"></i><i class="fas fa-tree"></i>
           </a>
+          <a id="blog-btn" href="blog/" class="button">Blog <i class="fas fa-pencil-alt"></i></a>
         </div>
       </div>
     </div>

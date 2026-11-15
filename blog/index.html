@@ -4,13 +4,32 @@ title: Blog
 ---
 <h1>Blog</h1>
 
-{% comment %} Only categories that have a post appear here. {% endcomment %}
-{% if site.posts.size > 0 %}
-<p class="cat-row">
-  {% for c in site.categories %}
-  <a href="{{ '/' | append: c[0] | append: '/' | relative_url }}">{{ c[0] | escape }}</a>
+{% comment %}
+  The tag filter: every tag in use, most-used first, then by name.
+
+  site.tags is keyed by tag name and cannot be sorted as it is, so each tag
+  is written out as "sort-key:name" and those strings are sorted. The key is
+  100000 minus the number of posts, which puts the biggest count first.
+
+  The first `tag_limit` tags always show. The rest are marked data-extra and
+  folded behind the More button by scripts/blog.js.
+{% endcomment %}
+{% assign tag_limit = 6 %}
+{% capture tag_keys %}{% for tag in site.tags %}{{ 100000 | minus: tag[1].size }}:{{ tag[0] }}|{% endfor %}{% endcapture %}
+{% assign tag_keys = tag_keys | split: '|' | sort %}
+{% if tag_keys.size > 0 %}
+<p class="tag-row">
+  <a href="{{ '/blog/' | relative_url }}" data-tag="">All</a>
+  {% for key in tag_keys %}
+  {% assign name = key | split: ':' | last %}
+  <a href="{{ '/blog/' | relative_url }}?tag={{ name | slugify }}" data-tag="{{ name | slugify }}"{% if forloop.index > tag_limit %} data-extra{% endif %}>{{ name | escape }}</a>
   {% endfor %}
+  {% if tag_keys.size > tag_limit %}
+  <button type="button" class="tag-more" aria-expanded="false" hidden>+{{ tag_keys.size | minus: tag_limit }} more</button>
+  {% endif %}
 </p>
 {% endif %}
 
-{% include post-list.html posts=site.posts show_category=true %}
+{% include post-list.html posts=site.posts %}
+
+<script defer src="{{ '/scripts/blog.js' | relative_url }}"></script>

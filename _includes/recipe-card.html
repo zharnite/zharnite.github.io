@@ -1,0 +1,47 @@
+{% comment %}
+  The recipe at the foot of a post, drawn from the post's `recipe:` block:
+
+    recipe:
+      name:         optional; the post's title is used without it
+      serves:       optional, e.g. 2
+      makes:        optional, e.g. 12 dumplings
+      time:         optional, e.g. 30 min
+      ingredients:  a list
+      steps:        a list
+      notes:        optional, a line or two
+{% endcomment %}
+{% assign r = include.recipe %}
+<section class="recipe-card" id="recipe" aria-labelledby="recipe-title">
+  <p class="recipe-label">Recipe</p>
+  <h2 id="recipe-title">{{ r.name | default: page.title | escape }}</h2>
+
+  {% if r.serves or r.makes or r.time %}
+  <p class="recipe-facts">
+    {% if r.serves %}<span>Serves <b>{{ r.serves | escape }}</b></span>{% endif %}
+    {% if r.makes %}<span>Makes <b>{{ r.makes | escape }}</b></span>{% endif %}
+    {% if r.time %}<span>Time <b>{{ r.time | escape }}</b></span>{% endif %}
+  </p>
+  {% endif %}
+
+  {% if r.ingredients %}
+  <h3>Ingredients</h3>
+  <ul>
+    {% for item in r.ingredients %}
+    <li>{{ item | escape }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if r.steps %}
+  <h3>Steps</h3>
+  <ol>
+    {% for step in r.steps %}
+    <li>{{ step | escape }}</li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+
+  {% if r.notes %}
+  <p class="recipe-notes">{{ r.notes | escape }}</p>
+  {% endif %}
+</section>
