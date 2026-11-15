@@ -28,6 +28,10 @@ layout: default
 {% comment %}
   Somewhere to go next. `previous` is the post before this one in time and
   `next` the one after, so older sits on the left and newer on the right.
+
+  Reply by email opens a message to `blog_email` from _config.yml with the
+  post's title as its subject. url_encode writes a space as +, which a mail
+  program would show as a plus sign, so those are turned into %20.
 {% endcomment %}
 <nav class="post-end" aria-label="More posts">
   {% if page.previous or page.next %}
@@ -40,5 +44,11 @@ layout: default
     {% endif %}
   </div>
   {% endif %}
-  <a class="post-end-all" href="{{ '/blog/' | relative_url }}">&larr; All posts</a>
+  <div class="post-end-row">
+    <a class="post-end-all" href="{{ '/blog/' | relative_url }}">&larr; All posts</a>
+    {% if site.blog_email %}
+    {% assign subject = 'Re: ' | append: page.title | url_encode | replace: '+', '%20' %}
+    <a class="post-end-reply" href="mailto:{{ site.blog_email }}?subject={{ subject }}">Reply by email</a>
+    {% endif %}
+  </div>
 </nav>

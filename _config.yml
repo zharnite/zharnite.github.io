@@ -29,6 +29,10 @@ blog_tags:
   - game dev
   - tech
 
+# Where "Reply by email" at the end of a post sends to. Remove the line to
+# take the link off every post.
+blog_email: zharnite3d+blog@gmail.com
+
 exclude:
   - README.md
   - .claude

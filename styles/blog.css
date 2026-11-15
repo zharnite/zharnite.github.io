@@ -48,7 +48,7 @@ body.blog {
 .blog time,
 .post-meta,
 .post-end span,
-.post-end-all,
+.post-end-row,
 .recipe-label,
 .recipe-facts,
 .blog code,
@@ -470,7 +470,15 @@ body.blog {
   color: var(--ink-dim);
 }
 
-.post-end-all {
+/* The way back on the left, the way to answer on the right. */
+.post-end-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.2rem 2.4rem;
+}
+
+.post-end-row a {
   font-size: 1.2rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -478,8 +486,8 @@ body.blog {
   color: var(--ink-dim);
 }
 
-.post-end-all:hover,
-.post-end-all:focus-visible {
+.post-end-row a:hover,
+.post-end-row a:focus-visible {
   color: var(--ink);
 }
 
