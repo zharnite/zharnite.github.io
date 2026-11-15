@@ -1,0 +1,16 @@
+---
+layout: default
+title: Blog
+---
+<h1>Blog</h1>
+
+{% comment %} Only categories that have a post appear here. {% endcomment %}
+{% if site.posts.size > 0 %}
+<p class="cat-row">
+  {% for c in site.categories %}
+  <a href="{{ '/' | append: c[0] | append: '/' | relative_url }}">{{ c[0] | escape }}</a>
+  {% endfor %}
+</p>
+{% endif %}
+
+{% include post-list.html posts=site.posts show_category=true %}

@@ -1,0 +1,259 @@
+/* The blog: listing pages and posts. Loaded after style.css, on pages that
+   carry class="blog" on <body>. These pages set no data-theme, so they get
+   the plain page's tokens: dark ink on white.
+
+   Skeleton sets 1rem to 10px. */
+
+.blog-container {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* --- type -----------------------------------------------------------------
+
+   Share Tech Mono is tiring over a long text, so the blog reads in Inter with
+   Space Grotesk headings. The mono face stays where it marks the site: the
+   name, the small labels, the footer, and code. */
+
+body.blog {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.blog h1,
+.blog h2,
+.blog h3 {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.blog-home,
+.blog-nav,
+.post-meta,
+.cat-row,
+.post-cat,
+.post-list time,
+.blog code,
+.blog pre,
+.blog #main-footer {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* --- header --------------------------------------------------------------- */
+
+.blog-header {
+  padding: 2.4rem 0 4rem;
+}
+
+.blog-header .blog-container {
+  display: flex;
+  align-items: baseline;
+  gap: 2.4rem;
+}
+
+/* The name, with the home page's underline at a quarter of the weight. */
+.blog-home {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000;
+  text-decoration: none;
+  border-bottom: 0.4rem solid;
+  border-image-slice: 1;
+  border-image-source: linear-gradient(
+    to right,
+    var(--color-1),
+    var(--color-1) 16.66%,
+    var(--color-2) 16.66%,
+    var(--color-2) 33.33%,
+    var(--color-3) 33.33%,
+    var(--color-3) 50%,
+    var(--color-4) 50%,
+    var(--color-4) 66.66%,
+    var(--color-5) 66.66%,
+    var(--color-5) 83.33%,
+    var(--color-6) 83.33%,
+    var(--color-6)
+  );
+}
+
+.blog-home:hover,
+.blog-home:focus {
+  color: #000;
+}
+
+.blog-nav a,
+.post-meta,
+.post-meta a,
+.cat-row a,
+.post-list time,
+.post-cat {
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+}
+
+.blog-nav a:hover,
+.blog-nav a:focus-visible,
+.post-meta a:hover,
+.post-meta a:focus-visible,
+.cat-row a:hover,
+.cat-row a:focus-visible,
+.post-cat:hover,
+.post-cat:focus-visible {
+  color: var(--ink);
+}
+
+/* --- headings -------------------------------------------------------------
+
+   style.css sizes h1 for the home page's hero. A page of text wants less. */
+
+.blog h1 {
+  margin-bottom: 2.4rem;
+  font-size: 3.4rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.blog h2 {
+  margin-top: 4rem;
+  margin-bottom: 1.2rem;
+  font-size: 2.2rem;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.blog h3 {
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.post-meta {
+  margin-bottom: 0.8rem;
+}
+
+/* --- listings ------------------------------------------------------------- */
+
+.cat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2rem;
+  margin-bottom: 2.4rem;
+}
+
+.post-list {
+  margin: 0;
+  list-style: none;
+}
+
+.post-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 1.6rem;
+  margin: 0;
+  padding: 1.2rem 0;
+  border-top: 1px solid var(--panel-edge);
+}
+
+.post-list time {
+  flex: none;
+  width: 10rem;
+}
+
+.post-link {
+  flex: 1 1 24rem;
+  font-size: 1.7rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.post-link:hover,
+.post-link:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
+}
+
+.post-list .post-empty {
+  color: var(--ink-dim);
+}
+
+/* --- a post --------------------------------------------------------------- */
+
+.post-body {
+  font-size: 1.7rem;
+  line-height: 1.7;
+}
+
+.post-body a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
+}
+
+.post-body a:hover,
+.post-body a:focus-visible {
+  color: var(--color-5);
+}
+
+/* Skeleton puts list markers inside the text block, which misaligns any
+   item that wraps. */
+.post-body ul,
+.post-body ol {
+  padding-left: 2.4rem;
+  list-style-position: outside;
+}
+
+.post-body li {
+  margin-bottom: 0.6rem;
+}
+
+.post-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 2.4rem 0;
+}
+
+.post-body blockquote {
+  margin: 2.4rem 0;
+  padding-left: 1.6rem;
+  border-left: 0.3rem solid var(--panel-edge);
+  color: var(--ink-dim);
+}
+
+.post-body pre {
+  overflow-x: auto;
+}
+
+.post-body hr {
+  margin: 3rem 0;
+  border-top-color: var(--panel-edge);
+}
+
+/* A wide table scrolls inside itself, not the page. */
+.post-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.blog #main-footer {
+  margin-top: 6rem;
+}
+
+@media (max-width: 600px) {
+  .blog h1 {
+    font-size: 2.8rem;
+  }
+
+  .post-list time {
+    width: 100%;
+  }
+}

@@ -1,9 +1,9 @@
-// The top nav: two dropdowns, Wallpaper and Time, sitting in the content
-// column. Below the breakpoint the whole bar collapses behind a hamburger
-// and the dropdowns become an accordion inside it.
+// The Appearance menu, at the right of the top bar: one button that opens a
+// panel holding the Wallpaper choices and, under them, the Time of day.
 //
-// Built in JS rather than written into index.html, so a visitor with JS off
-// sees the plain page instead of a row of dead controls.
+// The site's own links sit at the left of the bar and are written into
+// index.html. This menu is built in JS instead, so a visitor with JS off
+// sees the links and the plain page rather than a dead control.
 //
 // Each option list is a real radiogroup with arrow-key navigation. These are
 // mutually exclusive choices, and toggle buttons would both misreport that
@@ -27,44 +27,17 @@ function chevron() {
   );
 }
 
-// The lines start at the very edge of the viewBox (0.85 is half the stroke,
-// so the round cap just touches it). They used to start 3 units in, which
-// left the visible icon 2px right of the button border and underline that
-// its box was correctly aligned with.
-function burgerIcon() {
-  return (
-    '<svg viewBox="0 0 22 22" aria-hidden="true" focusable="false">' +
-    '<path d="M0.85 6h16M0.85 11h16M0.85 16h16" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.7" stroke-linecap="round"/></svg>'
-  );
-}
-
-function closeIcon() {
-  return (
-    '<svg viewBox="0 0 22 22" aria-hidden="true" focusable="false">' +
-    '<path d="M2.85 5l12 12M14.85 5l-12 12" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.7" stroke-linecap="round"/></svg>'
-  );
-}
-
-// One labelled dropdown: a trigger and the radiogroup it reveals. The
-// trigger does not repeat the current value; the open list already marks
-// it, and two places showing the same state is one too many.
-function buildSet(label, items, getSelected, onPick, onToggle, preview) {
-  const set = h('div', { className: 'nav-set' });
-
-  const trigger = h('button', { type: 'button', className: 'nav-trigger' }, [
-    h('span', { className: 'nav-label', textContent: label }),
-  ]);
-  trigger.insertAdjacentHTML('beforeend', chevron());
-  trigger.setAttribute('aria-expanded', 'false');
-  trigger.setAttribute('aria-haspopup', 'true');
+// One labelled radiogroup inside the panel.
+function buildGroup(label, items, getSelected, onPick, preview) {
+  const id = 'nav-group-' + label.toLowerCase();
+  const el = h('div', { className: 'nav-group' });
+  const heading = h('div', { className: 'nav-group-label', id, textContent: label });
 
   const group = h('div', {
     className: preview ? 'nav-opts nav-opts-preview' : 'nav-opts',
-    role: 'radiogroup',
   });
-  group.setAttribute('aria-label', label);
+  group.setAttribute('role', 'radiogroup');
+  group.setAttribute('aria-labelledby', id);
 
   const buttons = [];
 
@@ -79,9 +52,8 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
     if (!buttons.some((b) => b.tabIndex === 0) && buttons[0]) buttons[0].tabIndex = 0;
   }
 
-  // Arrows move the selection and leave the list open, as a radiogroup
-  // should. This used to go through click(), which also closes the list, so
-  // one key press selected, closed, and dropped focus on <body>.
+  // Arrows move the selection and keep focus in the group, as a radiogroup
+  // should.
   function move(from, delta) {
     const i = buttons.indexOf(from);
     const next = buttons[(i + delta + buttons.length) % buttons.length];
@@ -98,10 +70,11 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
     ]);
     b.setAttribute('role', 'radio');
     b.dataset.value = item.id;
+    // Picking leaves the panel open: the wallpaper and its time of day are
+    // chosen together, and the page behind shows the result straight away.
     b.addEventListener('click', () => {
       onPick(item.id);
       paint();
-      setOpen(false, true);
     });
     b.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -116,39 +89,18 @@ function buildSet(label, items, getSelected, onPick, onToggle, preview) {
     group.appendChild(b);
   });
 
-  let open = false;
-
-  // Closing hides whatever option had focus. Unless focus is sent back to
-  // the trigger it falls to <body> and a keyboard user loses their place.
-  function setOpen(next, refocus) {
-    open = next;
-    set.classList.toggle('is-open', open);
-    trigger.setAttribute('aria-expanded', String(open));
-    if (!open && refocus) trigger.focus();
-  }
-
-  trigger.addEventListener('click', () => {
-    const next = !open;
-    onToggle(api); // let the bar close the other one first
-    setOpen(next);
-    if (next) {
-      const sel = buttons.find((b) => b.tabIndex === 0);
-      if (sel) sel.focus();
-    }
-  });
-
-  set.appendChild(trigger);
-  set.appendChild(group);
+  el.appendChild(heading);
+  el.appendChild(group);
   paint();
 
-  const api = {
-    el: set,
+  return {
+    el,
     paint,
-    trigger,
-    isOpen: () => open,
-    close: (refocus) => setOpen(false, !!refocus),
+    focusSelected() {
+      const sel = buttons.find((b) => b.tabIndex === 0);
+      if (sel) sel.focus();
+    },
   };
-  return api;
 }
 
 export function buildMenu(opts) {
@@ -163,97 +115,74 @@ export function buildMenu(opts) {
     hasTime,
   } = opts;
 
-  const nav = h('nav', { id: 'nav' });
-  nav.setAttribute('aria-label', 'Site options');
+  const nav = h('div', { id: 'nav' });
 
-  const toggle = h('button', { type: 'button', id: 'nav-toggle' });
-  toggle.innerHTML = burgerIcon();
-  toggle.setAttribute('aria-expanded', 'false');
-  toggle.setAttribute('aria-controls', 'nav-sets');
-  toggle.setAttribute('aria-label', 'Open menu');
+  const trigger = h('button', { type: 'button', className: 'nav-trigger' }, [
+    h('span', { className: 'nav-label', textContent: 'Appearance' }),
+  ]);
+  trigger.insertAdjacentHTML('beforeend', chevron());
+  trigger.setAttribute('aria-expanded', 'false');
+  trigger.setAttribute('aria-controls', 'nav-panel');
 
-  const sets = h('div', { id: 'nav-sets' });
-  const allSets = [];
+  const panel = h('div', { id: 'nav-panel', hidden: true });
 
-  // Only one dropdown at a time.
-  function closeOthers(except) {
-    allSets.forEach((s) => {
-      if (s !== except) s.close();
-    });
-  }
-
-  const wallpaper = buildSet('Wallpaper', themes, getTheme, onTheme, closeOthers, true);
-  allSets.push(wallpaper);
-  sets.appendChild(wallpaper.el);
-
-  const time = buildSet('Time', times, getTime, onTime, closeOthers, false);
-  allSets.push(time);
-  sets.appendChild(time.el);
+  const wallpaper = buildGroup('Wallpaper', themes, getTheme, onTheme, true);
+  const time = buildGroup('Time', times, getTime, onTime, false);
   time.el.hidden = !hasTime();
 
-  nav.appendChild(sets);
-  nav.appendChild(toggle);
+  panel.appendChild(wallpaper.el);
+  panel.appendChild(time.el);
+  nav.appendChild(trigger);
+  nav.appendChild(panel);
   navMount.appendChild(nav);
 
-  // --- collapsed bar ------------------------------------------------------
-  //
-  // Whether the hamburger is in play at all is CSS's decision, not this
-  // file's: `is-open` only matters inside the narrow media query, so there
-  // is no breakpoint duplicated in JS to drift out of step.
+  let open = false;
 
-  let barOpen = false;
+  // Closing hides whatever option had focus. Unless focus is sent back to
+  // the trigger it falls to <body> and a keyboard user loses their place.
+  function setOpen(next, refocus) {
+    open = next;
+    nav.classList.toggle('is-open', open);
+    panel.hidden = !open;
+    trigger.setAttribute('aria-expanded', String(open));
+    if (!open && refocus) trigger.focus();
+  }
 
-  function setBarOpen(next, refocus) {
-    barOpen = next;
-    nav.classList.toggle('is-open', barOpen);
-    toggle.setAttribute('aria-expanded', String(barOpen));
-    toggle.setAttribute('aria-label', barOpen ? 'Close menu' : 'Open menu');
-    toggle.innerHTML = barOpen ? closeIcon() : burgerIcon();
-    if (!barOpen) {
-      closeOthers(null);
-      if (refocus) toggle.focus();
-    }
+  trigger.addEventListener('click', () => {
+    setOpen(!open, false);
+    if (open) wallpaper.focusSelected();
+  });
+
+  // Escape is only swallowed when it closed something; with the panel shut
+  // the key is left alone for the rest of the page.
+  function onKey(e) {
+    if (e.key !== 'Escape' || !open) return;
+    e.preventDefault();
+    setOpen(false, true);
   }
 
   function onOutside(e) {
-    if (nav.contains(e.target)) return;
-    closeOthers(null);
-    if (barOpen) setBarOpen(false, false);
+    if (open && !nav.contains(e.target)) setOpen(false, false);
   }
 
-  // Escape closes the innermost open thing and is only swallowed when it
-  // did: the first press closes a dropdown, the next the drawer, and with
-  // nothing open the key is left alone for the rest of the page.
-  function onKey(e) {
-    if (e.key !== 'Escape') return;
-    const openSet = allSets.find((s) => s.isOpen());
-    if (openSet) {
-      e.preventDefault();
-      openSet.close(true);
-      return;
-    }
-    if (barOpen) {
-      e.preventDefault();
-      setBarOpen(false, true);
-    }
-  }
+  // Tabbing out of the panel closes it, so it is never left open behind
+  // wherever focus has gone.
+  nav.addEventListener('focusout', (e) => {
+    if (open && e.relatedTarget && !nav.contains(e.relatedTarget)) setOpen(false, false);
+  });
 
   // Registered once rather than per open/close: the handlers are cheap and
   // this avoids the listener bookkeeping drifting out of step with state.
   document.addEventListener('pointerdown', onOutside, true);
   document.addEventListener('keydown', onKey, true);
 
-  toggle.addEventListener('click', () => setBarOpen(!barOpen, false));
-
   return {
-    // Called when state changes from outside the menu, so the marks and the
-    // trigger values stay true.
+    // Called when state changes from outside the menu, so the marks stay
+    // true and Time shows only for a wallpaper that has one.
     refresh() {
       wallpaper.paint();
       time.paint();
-      const show = hasTime();
-      if (!show) time.close();
-      time.el.hidden = !show;
+      time.el.hidden = !hasTime();
     },
   };
 }

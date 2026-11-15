@@ -1,0 +1,17 @@
+---
+layout: default
+---
+{% assign cat = page.categories | first %}
+<article class="post">
+  <header class="post-head">
+    <p class="post-meta">
+      <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %b %Y" }}</time>
+      {% if cat %}&middot; <a href="{{ '/' | append: cat | append: '/' | relative_url }}">{{ cat | escape }}</a>{% endif %}
+    </p>
+    <h1>{{ page.title | escape }}</h1>
+  </header>
+
+  <div class="post-body">
+    {{ content }}
+  </div>
+</article>

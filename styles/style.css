@@ -403,7 +403,10 @@ h1 {
   font-weight: 400;
 }
 
-/* --- top nav -------------------------------------------------------------- */
+/* --- top bar --------------------------------------------------------------
+
+   Places to go on the left, the Appearance menu on the right. The links are
+   in index.html; the menu is added by scripts/menu.js. */
 
 #topbar {
   position: fixed;
@@ -413,22 +416,25 @@ h1 {
   z-index: 3;
 }
 
+/* Skeleton clears .container with an ::after, which a flex container would
+   lay out as a third item. The menu is pushed right by its own margin, so
+   that stray item has nothing to do. */
+#topbar .container {
+  display: flex;
+  align-items: center;
+  padding-top: 1.2rem;
+  padding-bottom: 1.2rem;
+}
+
+#site-links {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
 #nav {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 2.4rem;
-  padding: 1.2rem 0;
-}
-
-#nav-sets {
-  display: flex;
-  align-items: center;
-  gap: 2.4rem;
-}
-
-.nav-set {
-  position: relative;
+  margin-left: auto;
 }
 
 /* Skeleton styles bare `button` heavily, so reset the parts that matter. */
@@ -446,18 +452,31 @@ h1 {
   text-transform: uppercase;
 }
 
+/* A link and the menu button are the same lettering. Neither has padding on
+   its outer side: the link's text starts on the content column's left edge
+   and the chevron ends on its right. */
+.nav-link,
 .nav-trigger {
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
   min-height: 4rem;
-  padding: 0.6rem 0.2rem 0.6rem 0;
   font-size: 1.2rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
   color: var(--ink-dim);
 }
 
-/* Skeleton turns every focused button #333. Picking a wallpaper sends focus
+.nav-link {
+  padding: 0.6rem 0.2rem 0.6rem 0;
+}
+
+.nav-trigger {
+  padding: 0.6rem 0 0.6rem 0.2rem;
+}
+
+/* Skeleton turns every focused button #333. Closing the panel sends focus
    back to the trigger, which then sat dark grey on the dark wallpapers until
    something else took focus. A focused control keeps its resting colour;
    keyboard focus still gets the brighter one through :focus-visible. */
@@ -466,15 +485,17 @@ h1 {
   color: var(--ink-dim);
 }
 
+.nav-link:hover,
+.nav-link:focus-visible,
 .nav-trigger:hover,
 .nav-trigger:focus-visible,
-.nav-set.is-open .nav-trigger {
+#nav.is-open .nav-trigger {
   color: var(--ink);
 }
 
 .nav-label {
   font-size: inherit;
-  letter-spacing: 0.14em;
+  letter-spacing: inherit;
   color: inherit;
 }
 
@@ -485,33 +506,44 @@ h1 {
   transition: transform 140ms ease;
 }
 
-.nav-set.is-open .nav-chev {
+#nav.is-open .nav-chev {
   transform: rotate(180deg);
 }
 
-.nav-set[hidden] {
-  display: none;
-}
-
-.nav-opts {
-  display: none;
+/* The panel hangs from the right edge of the button, so it opens into the
+   page and never off the side of it. */
+#nav-panel {
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
   z-index: 1;
-  margin-top: -0.7rem;
-  flex-direction: column;
-  align-items: stretch;
-  min-width: 100%;
-  padding: 0.4rem 0;
+  margin-top: -0.4rem;
+  width: 22rem;
+  max-width: calc(100vw - 4rem);
   background: var(--panel-bg);
   border: 1px solid var(--panel-edge);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-.nav-set.is-open .nav-opts {
+#nav-panel[hidden],
+.nav-group[hidden] {
+  display: none;
+}
+
+.nav-group-label {
+  padding: 1rem 1.4rem 0.6rem;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.nav-opts {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .nav-opt {
@@ -528,12 +560,8 @@ h1 {
 }
 
 /* In the wallpaper list each row is painted with the wallpaper itself, so
-   the list is a stack of strips of the real thing. Rows butt together with
-   no panel padding, which is what makes it read as one sheet. */
-.nav-opts-preview {
-  padding: 0;
-}
-
+   the list is a stack of strips of the real thing. Rows butt together,
+   which is what makes it read as one sheet. */
 .nav-opts-preview .nav-opt {
   min-height: 3.8rem;
   padding: 0.9rem 1.4rem;
@@ -581,105 +609,30 @@ h1 {
   box-shadow: inset 3px 0 0 currentColor;
 }
 
+
 .nav-opt:hover,
 .nav-opt:focus-visible {
   color: var(--ink);
 }
 
-/* currentColor, not --accent: on the plain theme --accent is a pale grey
-   that all but disappears, and the marker has to read on every wallpaper. */
-.nav-opt[aria-checked='true'] {
+/* Time is three short words, so it is one row of three. The mark for the
+   chosen one sits under it. currentColor, not --accent: on the plain theme
+   --accent is a pale grey that all but disappears, and the marker has to
+   read on every wallpaper. */
+.nav-opts:not(.nav-opts-preview) {
+  flex-direction: row;
+  padding: 0 0.4rem 0.6rem;
+}
+
+.nav-opts:not(.nav-opts-preview) .nav-opt {
+  flex: 1 1 0;
+  justify-content: center;
+  padding: 0.6rem 0.4rem;
+}
+
+.nav-opts:not(.nav-opts-preview) .nav-opt[aria-checked='true'] {
   color: var(--ink);
-  box-shadow: inset 2px 0 0 currentColor;
-}
-
-
-/* Hamburger: hidden until the bar runs out of room. */
-#nav-toggle {
-  display: none;
-  height: auto;
-  min-width: 4.4rem;
-  min-height: 4.4rem;
-  padding: 1rem 0.2rem 1rem 0;
-  margin: 0;
-  line-height: 0;
-  color: var(--ink-dim);
-  background: none;
-  border: 0;
-  border-radius: 0;
-  cursor: pointer;
-}
-
-#nav-toggle:hover,
-#nav-toggle:focus-visible {
-  color: var(--ink);
-}
-
-#nav-toggle svg {
-  display: block;
-  width: 2.2rem;
-  height: 2.2rem;
-}
-
-/* --- collapsed nav --------------------------------------------------------- */
-/* The two controls need roughly 370px. Skeleton's .container is 80% of the
-   viewport above 550px, so that fits comfortably down to ~520px; the
-   hamburger takes over at 600 to leave room for font differences. */
-
-@media (max-width: 600px) {
-  #nav-toggle {
-    display: inline-flex;
-    align-items: center;
-    /* Not centred: the icon has to line up with the text below it, and the
-       extra width of the tap target belongs on the right. */
-    justify-content: flex-start;
-  }
-
-  #nav-sets {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 22rem;
-    max-width: calc(100vw - 4rem);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 0.8rem 0;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-edge);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  #nav.is-open #nav-sets {
-    display: flex;
-  }
-
-  .nav-trigger {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.8rem 1.4rem;
-  }
-
-  .nav-trigger .nav-chev {
-    margin-left: auto;
-  }
-
-  /* Inside the drawer the lists are an accordion, not a popover: in flow,
-     indented, and without a second panel background on top of the first. */
-  .nav-opts {
-    position: static;
-    padding: 0 0 0.6rem 0;
-    background: none;
-    border: 0;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .nav-opt {
-    padding-left: 2.8rem;
-  }
+  box-shadow: inset 0 -2px 0 currentColor;
 }
 
 /* --- reduced motion ------------------------------------------------------- */

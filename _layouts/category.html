@@ -1,0 +1,11 @@
+---
+layout: default
+---
+{% comment %}
+  One category's posts. A page using this layout names the category in
+  `list_category`; see recipes/index.html.
+{% endcomment %}
+<p class="post-meta"><a href="{{ '/blog/' | relative_url }}">Blog</a></p>
+<h1>{{ page.title | escape }}</h1>
+
+{% include post-list.html posts=site.categories[page.list_category] %}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="zharnite" />
+  <meta name="description" content="{{ page.description | default: page.excerpt | default: site.description | strip_html | strip_newlines | truncate: 160 | escape }}" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <title>{% if page.title %}{{ page.title | escape }} &middot; {% endif %}{{ site.title | escape }}</title>
+  <link rel="apple-touch-icon" sizes="192x192" href="{{ '/images/apple-touch-icon.png' | relative_url }}" />
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ '/images/favicon-32x32.png' | relative_url }}" />
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ '/images/favicon-16x16.png' | relative_url }}" />
+  <link rel="icon" type="image/x-icon" href="{{ '/images/favicon.ico' | relative_url }}" />
+
+  <!-- The blog is the plain page: no wallpaper behind long text. It shares
+       the home page's stylesheets and adds its own on top. -->
+  <link rel="stylesheet" href="{{ '/styles/skeleton.css' | relative_url }}" />
+  <link rel="stylesheet" href="{{ '/styles/style.css' | relative_url }}" />
+  <link rel="stylesheet" href="{{ '/styles/blog.css' | relative_url }}" />
+
+  <!-- Same non-blocking font load as the home page. Inter is the reading
+       face, Space Grotesk the headings, and Share Tech Mono stays for the
+       name, the labels and code. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;1,400&amp;family=Share+Tech+Mono&amp;family=Space+Grotesk:wght@600&amp;display=swap" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;1,400&amp;family=Share+Tech+Mono&amp;family=Space+Grotesk:wght@600&amp;display=swap" />
+  </noscript>
+</head>
+
+<body class="blog">
+  <div id="main-wrapper">
+    <header class="blog-header">
+      <div class="blog-container">
+        <a class="blog-home" href="{{ '/' | relative_url }}">zharnite</a>
+        <nav class="blog-nav" aria-label="Blog">
+          <a href="{{ '/blog/' | relative_url }}">Blog</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <div class="blog-container">
+        {{ content }}
+      </div>
+    </main>
+
+    <footer id="main-footer">
+      <div class="blog-container">
+        <p>
+          &copy; 2022&ndash;present
+          <a href="https://github.com/Zharnite/zharnite.github.io" target="_blank" rel="noopener">zharnite</a>.
+        </p>
+      </div>
+    </footer>
+  </div>
+</body>
+
+</html>

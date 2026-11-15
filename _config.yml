@@ -1,0 +1,30 @@
+# GitHub Pages builds the site with Jekyll on every push. Only files that
+# start with front matter (the block between two --- lines) are processed;
+# index.html, the scripts and the shaders are copied as they are.
+
+title: zharnite
+description: Hi, I'm zharnite! A software engineer and 3D hobbyist.
+
+# A post's address is its category and its file name without the date:
+# _posts/recipes/2026-11-15-fried-rice.md  ->  /recipes/fried-rice/
+permalink: /:categories/:title/
+
+# The folder a post sits in decides its category, so a post only has to
+# state its title. Anything directly in _posts/, or in a folder with no
+# entry here, is filed under misc.
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      category: misc
+  - scope:
+      path: _posts/recipes
+      type: posts
+    values:
+      category: recipes
+
+exclude:
+  - README.md
+  - .claude
