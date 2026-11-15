@@ -470,7 +470,7 @@ body.blog {
   color: var(--ink-dim);
 }
 
-/* The way back on the left, the way to answer on the right. */
+/* The way back to the list. */
 .post-end-row {
   display: flex;
   flex-wrap: wrap;
@@ -493,6 +493,13 @@ body.blog {
 
 .blog #main-footer {
   margin-top: 6rem;
+}
+
+/* The address is underlined so it reads as something to press; the footer's
+   other link is the name, which is plain. */
+.blog #main-footer .blog-contact a {
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
 }
 
 @media (max-width: 600px) {

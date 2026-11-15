@@ -55,6 +55,26 @@
           &copy; 2022&ndash;present
           <a href="https://github.com/Zharnite/zharnite.github.io" target="_blank" rel="noopener">zharnite</a>.
         </p>
+        {% comment %}
+          The blog has no comments, so this is how a reader answers. The
+          address is `blog_email` in _config.yml, and it is written out so
+          it can be copied by hand where the link opens nothing, which is
+          common for people who read Gmail in a browser. On a post, the
+          message starts with the post's title as its subject; url_encode
+          writes a space as +, which a mail program would show as a plus
+          sign, so those are turned into %20.
+        {% endcomment %}
+        {% if site.blog_email %}
+        {% if page.layout == 'post' %}
+        {% assign subject = 'Re: ' | append: page.title | url_encode | replace: '+', '%20' | prepend: '?subject=' %}
+        {% else %}
+        {% assign subject = '' %}
+        {% endif %}
+        <p class="blog-contact">
+          Contact me:
+          <a href="mailto:{{ site.blog_email }}{{ subject }}">{{ site.blog_email | escape }}</a>
+        </p>
+        {% endif %}
       </div>
     </footer>
   </div>
